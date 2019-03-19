@@ -3,7 +3,6 @@
 import sys
 import tensorflow.contrib.keras as kr
 import pandas as pd
-
 import numpy as np
 
 
@@ -14,14 +13,17 @@ else:
     sys.setdefaultencoding("utf-8")
     is_py3 = False
 
+
+# 去除空字串并将字符串还原为float
 def data_convert(vectors):
-    ssls = list(filter(lambda x:x.strip() != '', vectors))
-    n_vector = [list(map(float, list(filter(lambda x: x.strip() != '', ss.split('//'))))) for ss in ssls]
+    ss_ls = list(filter(lambda x: x.strip() != '', vectors))
+    n_vector = [list(map(float, list(filter(lambda x: x.strip() != '', ss.split('//'))))) for ss in ss_ls]
     return n_vector
 
-#2 inputs
-def data_load2(data_f,config):
-    input_x1, input_x2,  input_y = [], [], []
+
+# 从文件读取数据
+def data_load(data_f, config, flag=3):
+    input_x1, input_x2, input_ks, input_y = [], [], [], []
     lines = data_f.read().split('\n')
     for i in range(len(lines)):
         line = lines[i]
@@ -32,84 +34,35 @@ def data_load2(data_f,config):
         array = line.split('|')
         if len(array) < 5:
             continue
-        ssls = array[1].split(' ')
-        ftzwls = array[2].split(' ')
-        label = int(array[3].strip())
-        input_x1.append(data_convert(ssls))
-        input_x2.append(data_convert(ftzwls))
+        ss_ls = array[1].split(' ')  # 事实
+        ftzw_ls = array[2].split(' ')  # 法条
+        label = int(array[3].strip())  # 标签1或0
+        zs_ls = array[4].split(' ')  # 知识
+        # 将事实和法条的list都还原为float
+        input_x1.append(data_convert(ss_ls))
+        input_x2.append(data_convert(ftzw_ls))
         if label == 0:
             input_y.append([1, 0])
         else:
             input_y.append([0, 1])
-
-    train_1 = kr.preprocessing.sequence.pad_sequences(np.array(input_x1), config.seq_length_1)
-    train_2 = kr.preprocessing.sequence.pad_sequences(np.array(input_x2), config.seq_length_2)
-
-    return train_1, train_2,  np.array(input_y)
-
-#used with data_load2
-def batch_iter2(x1, x2,  y, batch_size=128):
-    """生成批次数据"""
-    data_len = len(x1)
-    num_batch = int(data_len / batch_size)
-
-    indices = np.random.permutation(np.arange(data_len)) #洗牌
-    x1_shuffle = x1[indices]
-    x2_shuffle = x2[indices]
-    y_shuffle = y[indices]
-
-    for i in range(num_batch):
-        start_id = i * batch_size
-        end_id = min((i + 1) * batch_size, data_len)
-        yield x1_shuffle[start_id:end_id],x2_shuffle[start_id:end_id],  y_shuffle[start_id:end_id]
-
-def batch_iter2_test(x1, x2, y, batch_size=128):
-    """生成批次数据"""
-    data_len = len(x1)
-    num_batch = int(data_len / batch_size)
-    for i in range(num_batch):
-        start_id = i * batch_size
-        end_id = min((i + 1) * batch_size, data_len)
-        yield x1[start_id:end_id], x2[start_id:end_id], y[start_id:end_id]
-
-
-#3 inputs
-def data_load(data_f, config, flag=3):
-    input_x1,input_x2,input_ks,input_y = [], [], [], []
-    lines = data_f.read().split('\n')
-    for i in range(len(lines)):
-        line = lines[i]
-        print('index:',i)
-        if line.strip() == "":
-            continue
-
-        array = line.split('|')
-        if len(array) < 5:
-            continue
-        ssls = array[1].split(' ')
-        ftzwls = array[2].split(' ')
-        label = int(array[3].strip())
-        zsls = array[4].split(' ')
-        input_x1.append(data_convert(ssls))
-        input_x2.append(data_convert(ftzwls))
-        if label==0: input_y.append([1,0])
-        else: input_y.append([0,1])
-        if flag == 1:#mean vectors of words of 'jie'
-           zs_matrix = np.mean(data_convert(zsls),axis=0)
+        if flag == 1:  # mean vectors of words of 'jie'
+            zs_matrix = np.mean(data_convert(zs_ls), axis=0)
         else:
-            zs_matrix = data_convert(zsls)
+            zs_matrix = data_convert(zs_ls)
+        # 添加知识
         input_ks.append(zs_matrix)
 
-
-    print('inputx.shape:',len(input_ks[9]))
+    print('input_x.shape:', len(input_ks[9]))
+    # 将事实和法条都改为模型固定的长度
     train_1 = kr.preprocessing.sequence.pad_sequences(np.array(input_x1), config.FACT_LEN)
     train_2 = kr.preprocessing.sequence.pad_sequences(np.array(input_x2), config.LAW_LEN)
     train_ks = np.array(input_ks)
 
-    return train_1,train_2,train_ks,np.array(input_y)
+    return train_1, train_2, train_ks, np.array(input_y)
 
-#给每个文本加上一个start/end向量
-#默认是0-start/1-end
+
+# 给每个文本加上一个start/end向量
+# 默认是0-start/1-end
 def addStart(inputx,inputy,config,flag=0):
     start = np.float32(np.random.randn(128))
     inputx = list(inputx)
@@ -136,7 +89,7 @@ def addStart(inputx,inputy,config,flag=0):
     return np.array(new_inputx), np.array(new_inputy)
 
 
-#compute context
+# compute context
 def addcontext(inputx):
     batch_size = inputx.shape[0]
     new_inputx = []
@@ -245,26 +198,28 @@ def data_ngram(inputx,number):
     return np.array(new_inputx)
 
 
+# 生成批次数据（事实，法条，知识，标签）
 def batch_iter(x1, x2, ks, y, batch_size=128):
-    """生成批次数据"""
     data_len = len(x1)
-    num_batch = int(data_len / batch_size)
+    num_batch = int(data_len / batch_size)  # 计算可以生成几批
 
-    indices = np.random.permutation(np.arange(data_len)) #洗牌
+    indices = np.random.permutation(np.arange(data_len))  # 洗牌
     x1_shuffle = x1[indices]
     x2_shuffle = x2[indices]
     ks_shuffle = ks[indices]
     y_shuffle = y[indices]
 
+    # 一次一个批次地返回打乱的数据
     for i in range(num_batch):
         start_id = i * batch_size
         end_id = min((i + 1) * batch_size, data_len)
-        yield x1_shuffle[start_id:end_id],x2_shuffle[start_id:end_id], ks_shuffle[start_id:end_id], y_shuffle[start_id:end_id]
+        yield x1_shuffle[start_id:end_id], x2_shuffle[start_id:end_id], ks_shuffle[start_id:end_id], y_shuffle[start_id: end_id]
 
 
-def batch_iter_test(x1,x2,ks,y,batch_size=128):
+# 测试数据批次处理
+def batch_iter_test(x1, x2, ks, y, batch_size=128):
     data_len = len(x1)
-    num_batch = int(data_len / batch_size)
+    num_batch = int(data_len / batch_size)  # 批次数
 
     for i in range(num_batch):
         start_id = i * batch_size
