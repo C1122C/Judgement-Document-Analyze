@@ -1,10 +1,12 @@
 import re
 import jieba.posseg as pos
 
-def cutcontent(content):
+
+def cut_content(content):
     return list(filter(lambda x: x.strip() != '', re.split('；|。', content)))
 
-def getStrSegment(content,cx_save,stoplist):
+
+def get_str_segment(content, cx_save, stoplist):
     words = pos.cut(content)
     sls = []
     for word, cx in words:
@@ -15,7 +17,8 @@ def getStrSegment(content,cx_save,stoplist):
                 sls.append(word)
     return sls
 
-def showClassNum(content):
+
+def show_class_num(content):
     lines = content.split('\n')
     class_0, class_1 = 0, 0
 
@@ -27,10 +30,5 @@ def showClassNum(content):
             class_0 += 1
         else:
             class_1 += 1
-    print('0:',class_0)
-    print('1:',class_1)
-
-f = open('../../source/dataset/set_4/val.txt','r',encoding='utf-8')
-lines = f.read()
-showClassNum(lines)
-
+    print('0:', class_0)
+    print('1:', class_1)

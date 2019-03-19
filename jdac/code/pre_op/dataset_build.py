@@ -1,9 +1,9 @@
-from jdac.code.util.excel_op import getrowls,getcolls,getexceldata
+from jdac.code.util.excel_op import get_rows, get_cols, get_excel_data
 from jdac.code.util.file_fun import getlines
-from jdac.code.util.str_op import getStrSegment
-from jdac.code.pre_op.word2vec import vector,load_models
+from jdac.code.util.str_op import get_str_segment
+from jdac.code.pre_op.word2vec import vector
 
-import os,random,shutil
+import os, random, shutil
 import numpy as np
 
 
@@ -12,28 +12,29 @@ import numpy as np
 输入:exceldict:数据集目录,以及该txt文件存储位置
 输出：无
 '''
-def fun1(exceldict,target):
-    f = open(target, 'w', encoding='utf-8')
-    dir = os.listdir(exceldict)
 
-    for i in range(len(dir)):
-        ex = dir[i]
-        expath = exceldict + '/' + ex
-        rows = getrowls(expath)  # 事实ls
-        cols = getcolls(expath)  # 法条ls
+
+def fun1(excel_dict,target):
+    f = open(target, 'w', encoding='utf-8')
+    direct = os.listdir(excel_dict)
+
+    for i in range(len(direct)):
+        ex = direct[i]
+        ex_path = excel_dict + '/' + ex
+        rows = get_rows(ex_path)  # 事实ls
+        cols = get_cols(ex_path)  # 法条ls
         if len(rows) > 0 and len(cols) > 0:
             s = ''
-            data = getexceldata(expath)
+            data = get_excel_data(ex_path)
             # 统计0的个数和下标
             array_index = []
             count = 0
-            for i in range(len(rows)):
+            for k in range(len(rows)):
                 for j in range(len(cols)):
-                    if str(rows[i]).strip() != '' and str(cols[j]).strip() != '':
-                        if int(data[j][i]) == 0:
+                    if str(rows[k]).strip() != '' and str(cols[j]).strip() != '':
+                        if int(data[j][k]) == 0:
                             array_index.append(count)
                         count += 1
-
 
             # 随机生成被过滤的下标
             base = random.sample([i for i in range(len(array_index))], int(len(array_index) * 0.50))
@@ -41,56 +42,39 @@ def fun1(exceldict,target):
             for index in base:
                 filer_index.append(array_index[index])
 
-
             filer_index = []
             # 过滤下标是filter_index的负例样本
 
-
             count = 0
-            for i in range(len(rows)):
+            for k in range(len(rows)):
                 for j in range(len(cols)):
-                    if rows[i].strip() == '' or cols[j].strip() == '':
+                    if rows[k].strip() == '' or cols[j].strip() == '':
                         pass
                     else:
                         if count not in filer_index:
-                           s += ex + '|' + rows[i] + '|' + cols[j] + '|' + str(int(data[j][i])) + '\n'
-                        # else:
-                        #     print('filter')
+                            s += ex + '|' + rows[k] + '|' + cols[j] + '|' + str(int(data[j][k])) + '\n'
+
                         count += 1
 
             f.write(s)
     f.close()
 
-'''
-训练数据
-'''
-# exceldict = '../../source/训练集'
-# target = '../../source/dataset/set-lyw/train-原始训练集.txt'
-# fun1(exceldict,target)
-
-'''
-测试数据
-'''
-# exceldict = '/Users/wenny/PycharmProjects/wsanalyse/wsfx/data/事实法条数据/测试集'
-# target = '../../source/dataset/test-原始训练集.txt'
-# fun1(exceldict,target)
-
-
-#================================================================================================================
 
 '''
 将train-原始数据集.txt里面的每个法条对应的先验知识加入:
 格式为:文书名|事实|法条|label|先验知识\n
 输入:train-原始数据集,txt
 '''
-def fun2(ft_zs_f,data_f,newdata_f):
-    #首先读取每个法条对应的先验知识存放在dict中
-    ftzs_dict = {}
+
+
+def fun2(ft_zs_f, data_f, new_data_f):
+    # 首先读取每个法条对应的先验知识存放在dict中
+    ft_zs_dict = {}
     lines = ft_zs_f.read().split('\n')
     for line in lines:
         zs = line.split('|')[0]
-        ftname = line.split('|')[1]
-        ftzs_dict[ftname] = zs
+        ft_name = line.split('|')[1]
+        ft_zs_dict[ft_name] = zs
     lines = data_f.read().split('\n')
     s = ''
     for line in lines:
@@ -98,38 +82,14 @@ def fun2(ft_zs_f,data_f,newdata_f):
         if line == '':
             continue
         ft = line.split('|')[2]
-        ftname = ft[:ft.index(":")]
+        ft_name = ft[:ft.index(":")]
         try:
-           ftzs = ftzs_dict[ftname]
-           s += line +'|' + ftzs + '\n'
+            ft_zs = ft_zs_dict[ft_name]
+            s += line +'|' + ft_zs + '\n'
         except:
-            print(ftname)
-    newdata_f.write(s)
-    newdata_f.close()
-
-'''
-训练数据
-'''
-# ftzs_path = '../../source/法条/ft_nr_先验知识.txt'
-# data_path = '../../source/dataset/set-lyw/train-原始训练集.txt'
-# newdata_path = '../../source/dataset/set-lyw/train-添加先验知识.txt'
-# f1 = open(ftzs_path,'r',encoding='utf-8')
-# f2 = open(data_path,'r',encoding='utf-8')
-# f3 = open(newdata_path,'w',encoding='utf-8')
-# fun2(f1,f2,f3)
-
-
-'''
-测试数据
-'''
-# ftzs_path = '../../source/法条/ft_nr_先验知识.txt'
-# data_path = '../../source/dataset/test-原始训练集.txt'
-# newdata_path = '../../source/dataset/test-添加先验知识.txt'
-# f1 = open(ftzs_path,'r',encoding='utf-8')
-# f2 = open(data_path,'r',encoding='utf-8')
-# f3 = open(newdata_path,'w',encoding='utf-8')
-# fun2(f1,f2,f3)
-
+            print(ft_name)
+    new_data_f.write(s)
+    new_data_f.close()
 
 
 '''
@@ -138,62 +98,51 @@ def fun2(ft_zs_f,data_f,newdata_f):
 格式:文书名|事实|法条正文|label|先验知识\n
 其中先验知识不同级别之间用的是@做分隔符
 '''
+
+
 def fun3(data_f,target_f):
     lines = data_f.read().split('\n')
-    stoplist = getlines('../../source/stopwords.txt')
-    cx_save = ['n','v','a','x']
+    stop_list = getlines('../../source/stopwords.txt')
+    cx_save = ['n', 'v', 'a', 'x']
     s = ''
     for line in lines:
         array = line.split('|')
         if len(array) != 5:
             print(line)
             break
-        ss,ft,zs = array[1],array[2],array[4]
-        ftname = ft[:ft.index(":")]
-        ftzw = ft[ft.index(":"):]
+        ss, ft, zs = array[1], array[2], array[4]
+        ft_name = ft[:ft.index(":")]
+        ft_zw = ft[ft.index(":"):]
 
-        ssls = getStrSegment(ss,cx_save,stoplist)
-        ftzwls = getStrSegment(ftzw,cx_save,stoplist)
-        #当zs是"?"的情况
-        zsstr = 'ft:' + ' '.join(getStrSegment(ftname, cx_save, stoplist)) +'@'
+        ss_ls = get_str_segment(ss, cx_save, stop_list)
+        ft_zw_ls = get_str_segment(ft_zw, cx_save, stop_list)
+        # 当zs是"?"的情况
+        zs_s_tr = 'ft:' + ' '.join(get_str_segment(ft_name, cx_save, stop_list)) +'@'
         if zs.strip() == "?": pass
         else:
-              zs = str(zs).split(' ')
-              for p in zs:
-                  p_array = p.split(':')
-                  if len(p_array) != 2:
-                   print(line)
-                   break
-                  zslv = p.split(':')[0]
-                  zsnr = p.split(':')[1]
-                  zsstr += zslv + ':' + ' '.join(getStrSegment(zsnr, cx_save, stoplist)) + '@'
-              s += array[0] + '|' +' '.join(ssls) + '|' + ' '.join(ftzwls) +'|'+ array[3] +'|' + zsstr +'\n'
+            zs = str(zs).split(' ')
+            for p in zs:
+                p_array = p.split(':')
+                if len(p_array) != 2:
+                    print(line)
+                    break
+                zs_lv = p.split(':')[0]
+                zs_nr = p.split(':')[1]
+                zs_s_tr += zs_lv + ':' + ' '.join(get_str_segment(zs_nr, cx_save, stop_list)) + '@'
+            s += array[0] + '|' + ' '.join(ss_ls) + '|' + ' '.join(ft_zw_ls) + '|' + array[3] + '|' + zs_s_tr + '\n'
 
     target_f.write(s)
     target_f.close()
 
-'''
-训练数据
-'''
-# data_f= open('../../sourcepath/dataset/set-lyw/train-添加先验知识.txt','r',encoding='utf-8')
-# tartget_f = open('../../source/dataset/set-lyw/train-分词.txt','w',encoding='utf-8')
-# fun3(data_f,tartget_f)
 
 '''
-测试数据
-'''
-# data_f= open('../../source/dataset/test-添加先验知识.txt','r',encoding='utf-8')
-# tartget_f = open('../../source/dataset/test-分词.txt','w',encoding='utf-8')
-# fun3(data_f,tartget_f)
-
-
-'''
-========================================================================================================================
 向量化存储
 输入:data_f:已经分好词的数据集
 输出:target_f:向量化存储的数据集
 格式:整体的分隔符仍然和原来一样，一个词向量内部用//表示
 '''
+
+
 def fun4(data_f, targte_f, model_ss, model_ft):
     news = ''
     lines = data_f.read().split('\n')
@@ -204,26 +153,28 @@ def fun4(data_f, targte_f, model_ss, model_ft):
             break
         news += array[0]+'|'
 
-        ssls = array[1].split(' ')
-        ftzwls = array[2].split(' ')
-        zsls = array[4].split('@')
-        for ss in ssls: news += '//'.join(map(str,list(vector(ss, model_ss)))) + ' '
+        ss_ls = array[1].split(' ')
+        ft_zw_ls = array[2].split(' ')
+        zs_ls = array[4].split('@')
+        for ss in ss_ls:
+            news += '//'.join(map(str, list(vector(ss, model_ss)))) + ' '
         news += '|'
-        for zw in ftzwls: news += '//'.join(map(str,list(vector(zw, model_ft)))) + ' '
-        news += '|'+array[3] +'|'
-        news += zsVector(zsls,model_ft,flag=3)+'\n'
+        for zw in ft_zw_ls:
+            news += '//'.join(map(str, list(vector(zw, model_ft)))) + ' '
+        news += '|'+array[3] + '|'
+        news += zs_vector(zs_ls, model_ft, flag=3)+'\n'
     targte_f.write(news)
 
 
-def zsVector(zwls, word_m,flag=1):
-    s =''
-    if flag == 1:#只对最细致的那个level进行向量化
-        obls = zwls[-2].split(':')[1].split(' ')
-        for ob in obls:
-            s += '//'.join(map(str,list(vector(ob,word_m)))) +' '
-    else:#将层级目录分为三级：名字/章/节(包含?:),向量化
-        matrix = np.zeros(shape=[3,128],dtype=float)
-        for zw in zwls:
+def zs_vector(zw_ls, word_m, flag=1):
+    s = ''
+    if flag == 1:  # 只对最细致的那个level进行向量化
+        ob_ls = zw_ls[-2].split(':')[1].split(' ')
+        for ob in ob_ls:
+            s += '//'.join(map(str, list(vector(ob, word_m)))) + ' '
+    else:  # 将层级目录分为三级：名字/章/节(包含?:),向量化
+        matrix = np.zeros(shape=[3, 128], dtype=float)
+        for zw in zw_ls:
             if zw.strip() == '':
                 continue
             level = zw.split(':')[0].strip()
@@ -231,11 +182,11 @@ def zsVector(zwls, word_m,flag=1):
             if level == '':
                 continue
             else:
-                conls = content.split(' ')
+                con_ls = content.split(' ')
                 vectors = []
-                for ob in conls:
-                    vectors.append(list(vector(ob,word_m)))
-                vectors = np.mean(np.array(vectors),axis=0)
+                for ob in con_ls:
+                    vectors.append(list(vector(ob, word_m)))
+                vectors = np.mean(np.array(vectors), axis=0)
                 if level == 'ft':
                     matrix[0] = vectors
                 elif level == '章':
@@ -243,42 +194,27 @@ def zsVector(zwls, word_m,flag=1):
                 elif level == '节' or level == '?':
                     matrix[2] = vectors
 
-        #将得到的matrix存储到s中
+        # 将得到的matrix存储到s中
         for line in matrix:
             # print(line)
-            s += '//'.join(map(str,list(line))) + ' '
+            s += '//'.join(map(str, list(line))) + ' '
     return s
 
-'''
-训练数据
-'''
-data_f= open('../../source/dataset/set_1/test-分词.txt','r',encoding='utf-8')
-tartget_f = open('../../source/dataset/set-lyw2/test.txt','w',encoding='utf-8')
-model_ss = load_models('../../source/wordvector/ssmodel_size128.model')
-model_ft = load_models('../../source/wordvector/lawmodel_size128.model')
-fun4(data_f,tartget_f,model_ss,model_ft)
 
-'''
-测试数据
-# '''
-# data_f= open('../../source/dataset/set_1/test-分词.txt','r',encoding='utf-8')
-# tartget_f = open('../../source/dataset/set_2/test-向量化.txt','w',encoding='utf-8')
-# model_ss = load_models('../../source/wordvector/ssmodel_size128.model')
-# model_ft = load_models('../../source/wordvector/ssmodel_size128.model')
-# fun4(data_f,tartget_f,model_ss,model_ft)
-# ========================================================================================================================
 '''
 切分训练集数据:训练集/验证集 = 9000/2447
 输入:向量化好的数据集txt
 输出:划分好的数据集(为了能够计算基于文书的效率，我们随机选取几篇文书作为验证集)
 '''
-def fun4(data_f,wsls,targetpath):
-    #从wsls目录中选取作为验证集的文书名字
-    val_index = random.sample([i for i in range(len(wsls))],50)
+
+
+def fun4(data_f,ws_ls,target_path):
+    # 从ws_ls目录中选取作为验证集的文书名字
+    val_index = random.sample([i for i in range(len(ws_ls))], 50)
     print(val_index)
     val_names = []
-    for index in val_index: val_names.append(wsls[index])
-
+    for index in val_index:
+        val_names.append(ws_ls[index])
     val_str = ''
     train_str = ''
     lines = data_f.read().split('\n')
@@ -288,25 +224,20 @@ def fun4(data_f,wsls,targetpath):
             val_str += line + '\n'
         else:
             train_str += line + '\n'
-    f_v = open(os.path.join(targetpath,'val-分词.txt'),'w',encoding='utf-8')
-    f_t = open(os.path.join(targetpath,'train-分词.txt'),'w',encoding='utf-8')
+    f_v = open(os.path.join(target_path, 'val-分词.txt'), 'w', encoding='utf-8')
+    f_t = open(os.path.join(target_path, 'train-分词.txt'), 'w', encoding='utf-8')
     f_v.write(val_str)
     f_v.close()
     f_t.write(train_str)
     f_t.close()
-#
-
-# exceldict = '/home/gjd/PycharmProjects/wsfx_ks/wsfx2/source/训练集'
-# wsls = os.listdir(exceldict)
-# data_f = open('../../source/dataset/set_1/train-分词.txt','r',encoding='utf-8')
-# fun4(data_f,wsls,'../../source/dataset/set_1')
 
 
-# ========================================================================================================================
 '''
 move dataset，将分好的训练集、验证集文件都移动到对应文件夹
 '''
-def fun5(data_f,sourcepath,targetpath):
+
+
+def fun5(data_f,source_path,target_path):
     lines = data_f.read().split('\n')
     files = []
     for line in lines:
@@ -317,22 +248,13 @@ def fun5(data_f,sourcepath,targetpath):
             files.append(name)
     print(len(files))
     for file in files:
-        spath = os.path.join(sourcepath,file)
-        tpath = os.path.join(targetpath,file)
+        s_path = os.path.join(source_path, file)
+        t_path = os.path.join(target_path, file)
         try:
-           shutil.move(spath,tpath)
+            shutil.move(s_path, t_path)
         except:
             print(file)
 
-# f = open('../../source/dataset/set_1/val-分词.txt','r',encoding='utf-8')
-# sourcepath = '../../source/训练集'
-# targetpath = '../../source/valset'
-# dir = os.listdir(sourcepath)
-# print(len(dir))
-# fun5(f,sourcepath,targetpath)
-
-
-#========================================================================================================================
 
 '''
 这个是为了模型matchPy.py：
@@ -341,23 +263,24 @@ def fun5(data_f,sourcepath,targetpath):
 输出为set_5/train.txt etc
 '''
 
-def fun6(corpus,target):
+
+def fun6(corpus, target):
     lines = corpus.read().split('\n')
-    cpslist = []
+    cps_list = []
     for line in lines:
-        wordls = line.split(' ')
-        for w in wordls:
+        word_ls = line.split(' ')
+        for w in word_ls:
             w = w.strip()
-            if w != '' and w not in cpslist:
-                cpslist.append(w)
-    print('words size:'+str(len(cpslist)))
-    target.write('\n'.join(cpslist))
+            if w != '' and w not in cps_list:
+                cps_list.append(w)
+    print('words size:'+str(len(cps_list)))
+    target.write('\n'.join(cps_list))
     target.close()
 
 
-def fun8(wordls,cps_dict):
+def fun8(word_ls, cps_dict):
     w_ids = []
-    for w in wordls:
+    for w in word_ls:
         try:
             w_ids.append(str(cps_dict[w]))
         except:
@@ -365,73 +288,23 @@ def fun8(wordls,cps_dict):
     return w_ids
 
 
-def fun7(source,corpus,target):
-    cpslist = corpus.read().split('\n')
+def fun7(source, corpus, target):
+    cps_list = corpus.read().split('\n')
     cps_dict = {}
-    for i in range(len(cpslist)): cps_dict[cpslist[i].strip()] = i+1
+    for i in range(len(cps_list)):
+        cps_dict[cps_list[i].strip()] = i+1
     lines = source.read().split('\n')
     newlines = []
     for line in lines:
         array = line.split('|')
         if len(array) == 5:
-            ssls = list(filter(lambda x:x.strip()!='',array[1].split(' ')))
-            ftls = list(filter(lambda x:x.strip()!='',array[2].split(' ')))
+            ss_ls = list(filter(lambda x: x.strip() != '', array[1].split(' ')))
+            ft_ls = list(filter(lambda x: x.strip() != '', array[2].split(' ')))
             label = array[3]
-            ss_ids = fun8(ssls,cps_dict)
-            ft_ids = fun8(ftls,cps_dict)
+            ss_ids = fun8(ss_ls, cps_dict)
+            ft_ids = fun8(ft_ls, cps_dict)
             newlines.append(array[0]+'|'+str(len(ss_ids))+'|'+' '.join(ss_ids)+'|'+str(len(ft_ids))+'|'+' '.join(ft_ids)+'|'+str(label))
         else:
             print("ERROR:"+line)
     target.write('\n'.join(newlines))
     target.close()
-
-
-'''
-set dictionary
-'''
-# sourcepath = '../../source/wordvector/corpus.txt'
-# corpuspath = '../../source/wordvector/words.txt'
-# f1 = open(sourcepath,'r',encoding='utf-8')
-# f2 = open(corpuspath,'w',encoding='utf-8')
-# fun6(f1,f2)
-
-
-'''
-convert input text into ids
-'''
-# corpuspath = '../../source/wordvector/words.txt'
-# sourcepath = '../../source/dataset/set_1/val-分词.txt'
-# targetpath = '../../source/dataset/set_5/val.txt'
-# f1 = open(sourcepath,'r',encoding='utf-8')
-# f2 = open(corpuspath,'r',encoding='utf-8')
-# f3 = open(targetpath,'w',encoding='utf-8')
-# fun7(f1,f2,f3)
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
