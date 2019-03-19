@@ -9,7 +9,7 @@ import numpy as np
 import tensorflow as tf
 from sklearn import metrics
 from jdac.code.model.ce_order import ModelConfig, CNN
-from jdac.code.train.loader import batch_iter, batch_iter_test, data_load
+from jdac.code.train.loader import batch_iter, batch_iter_test, data_load ,data_load_with_content
 
 data_dir = '../../source/set_4'
 train_path = data_dir+'/train.txt'
@@ -39,6 +39,7 @@ ck_path = 'times-1'
 tb_path = 'times-1'
 save_path = save_dir+'/checkpoints/'+ck_path+'/best_validation'
 tensor_board_dir = save_dir + '/tensor_board/' + tb_path
+new_save_path = save_dir + '/checkpoints/' + ck_path + '/best_validation_content'
 
 if not os.path.exists(save_path):
     os.makedirs(save_path)
@@ -189,6 +190,73 @@ def train():
             break
 
 
+def train_try():
+    print("try adding content**********************************")
+    # 配置 Saver
+    saver = tf.train.Saver()
+    print("Loading training and validation data...")
+    start_time = time.time()
+    # 载入训练集
+    # 事实、法条、知识、标记
+    train_1, train_2, train_ks, train_output = data_load_with_content(t_f, config, ks_flag)
+    print('train len:', train_1.shape)
+    # 载入验证集
+    # 事实、法条、知识、标记
+    val_1, val_2, val_ks, val_output = data_load(v_f, config, ks_flag)
+    print('validation len:', len(val_1))
+
+    time_dif = get_time_dif(start_time)
+    print("Time usage:", time_dif)
+
+    # 创建session
+    session = tf.Session()
+    session.run(tf.global_variables_initializer())
+
+    print('Training and evaluating...')
+    start_time = time.time()
+    total_batch = 0  # 总批次
+    best_acc_val = 0.0  # 最佳验证集准确率
+    last_improved = 0  # 记录上一次提升批次
+    require_improvement = 1000  # 如果超过1000轮未提升，提前结束训练
+
+    flag = False
+    for epoch in range(config.num_epochs):
+        print('Epoch:', epoch + 1)
+        batch_train = batch_iter(train_1, train_2, train_ks, train_output, config.batch_size)
+        for x1_batch, x2_batch, ks_batch, y_batch in batch_train:
+            feed_dict = feed_data(x1_batch, x2_batch, ks_batch, y_batch, config.dropout_keep_prob)
+            if total_batch % config.print_per_batch == 0:
+                # 每多少轮次输出在训练集和验证集上的性能
+                feed_dict[model.keep_prob] = 1.0
+                loss_train, acc_train = session.run([model.loss, model.acc], feed_dict=feed_dict)
+                loss_val, acc_val = evaluate(session, val_1, val_2, val_ks, val_output)  # 验证当前会话中的模型的loss和acc
+
+                if acc_val > best_acc_val:
+                    # 保存最好结果
+                    best_acc_val = acc_val
+                    last_improved = total_batch
+                    saver.save(sess=session, save_path=new_save_path)
+                    improved_str = '*'
+                else:
+                    improved_str = ''
+
+                time_dif = get_time_dif(start_time)
+                msg = 'Iter: {0:>6}, Train Loss: {1:>6.2}, Train Acc: {2:>7.2%},' \
+                      + ' Val Loss: {3:>6.2}, Val Acc: {4:>7.2%}, Time: {5} {6}'
+                print(msg.format(total_batch, loss_train, acc_train, loss_val, acc_val, time_dif, improved_str))
+
+            session.run(model.optim, feed_dict=feed_dict)  # 运行优化
+            total_batch += 1
+
+            if total_batch - last_improved > require_improvement:
+                # 验证集正确率长期不提升，提前结束训练
+                print("No optimization for a long time, auto-stopping...")
+                flag = True
+                break  # 跳出循环
+        if flag:  # 同上
+            break
+
+
 # 测试模型
 def test():
     print("Loading test data...")
@@ -237,5 +305,53 @@ def test():
     return y_test_cls, y_pred_cls
 
 
-train()
-test()
+def test_try():
+    print("Loading test data for content**********************")
+    start_time = time.time()
+    x1_test, x2_test, ks_test, y_test = data_load(test_f, config, flag=ks_flag)
+
+    session = tf.Session()
+    session.run(tf.global_variables_initializer())
+    saver = tf.train.Saver()
+    saver.restore(sess=session, save_path=new_save_path)  # 读取保存的模型
+
+    print('Testing...')
+    loss_test, acc_test = evaluate_test(session, x1_test, x2_test, ks_test, y_test)
+    msg = 'Test Loss: {0:>6.2}, Test Acc: {1:>7.2%}'
+    print(msg.format(loss_test, acc_test))
+
+    batch_size = 128
+    data_len = len(x1_test)
+    num_batch = int(data_len / batch_size)
+
+    y_test_cls = np.argmax(y_test, 1)
+    y_pred_cls = np.zeros(shape=len(x1_test), dtype=np.int32)  # 保存预测结果
+
+    for i in range(num_batch):  # 逐批次处理
+        start_id = i * batch_size
+        end_id = min((i + 1) * batch_size, data_len)
+        feed_dict = {
+            model.input_x1: x1_test[start_id:end_id],
+            model.input_x2: x2_test[start_id:end_id],
+            model.input_ks: ks_test[start_id:end_id],
+            model.keep_prob: 1.0   # 这个表示测试时不使用dropout对神经元过滤
+        }
+        # 将所有批次的预测结果都存放在y_pred_cls中
+        y_pred_cls[start_id:end_id] = session.run(model.y_pred_cls, feed_dict=feed_dict)
+
+    print("Precision, Recall and F1-Score...")
+    print(metrics.classification_report(y_test_cls, y_pred_cls, digits=4))  # 直接计算准确率，召回率和f值
+
+    # 混淆矩阵
+    print("Confusion Matrix...")
+    cm = metrics.confusion_matrix(y_test_cls, y_pred_cls)
+    print(cm)
+
+    time_dif = get_time_dif(start_time)
+    print("Time usage:", time_dif)
+    return y_test_cls, y_pred_cls
+
+
+# train_try()
+# test()
+test_try()

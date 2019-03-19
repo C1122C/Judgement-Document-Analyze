@@ -6,9 +6,9 @@ from gensim.models import word2vec
 from jdac.code.util.file_fun import getlines
 
 
-def build_model(ws_path,corpus_path,model_path,spword_path):
+def build_model(ws_path, corpus_path, model_path, spword_path):
     print('build model......')
-    setCor(ws_path, corpus_path, spword_path)
+    set_cor(ws_path, corpus_path, spword_path)
     print('start.....')
     sentence = word2vec.LineSentence(corpus_path)
     model = word2vec.Word2Vec(sentence, min_count=5, size=128)

@@ -14,7 +14,7 @@ import numpy as np
 '''
 
 
-def fun1(excel_dict,target):
+def fun1(excel_dict, target):
     f = open(target, 'w', encoding='utf-8')
     direct = os.listdir(excel_dict)
 
@@ -85,7 +85,7 @@ def fun2(ft_zs_f, data_f, new_data_f):
         ft_name = ft[:ft.index(":")]
         try:
             ft_zs = ft_zs_dict[ft_name]
-            s += line +'|' + ft_zs + '\n'
+            s += line + '|' + ft_zs + '\n'
         except:
             print(ft_name)
     new_data_f.write(s)
@@ -100,7 +100,7 @@ def fun2(ft_zs_f, data_f, new_data_f):
 '''
 
 
-def fun3(data_f,target_f):
+def fun3(data_f, target_f):
     lines = data_f.read().split('\n')
     stop_list = getlines('../../source/stopwords.txt')
     cx_save = ['n', 'v', 'a', 'x']
@@ -117,8 +117,9 @@ def fun3(data_f,target_f):
         ss_ls = get_str_segment(ss, cx_save, stop_list)
         ft_zw_ls = get_str_segment(ft_zw, cx_save, stop_list)
         # 当zs是"?"的情况
-        zs_s_tr = 'ft:' + ' '.join(get_str_segment(ft_name, cx_save, stop_list)) +'@'
-        if zs.strip() == "?": pass
+        zs_s_tr = 'ft:' + ' '.join(get_str_segment(ft_name, cx_save, stop_list)) + '@'
+        if zs.strip() == "?":
+            pass
         else:
             zs = str(zs).split(' ')
             for p in zs:
@@ -208,7 +209,7 @@ def zs_vector(zw_ls, word_m, flag=1):
 '''
 
 
-def fun4(data_f,ws_ls,target_path):
+def fun4(data_f, ws_ls, target_path):
     # 从ws_ls目录中选取作为验证集的文书名字
     val_index = random.sample([i for i in range(len(ws_ls))], 50)
     print(val_index)
@@ -237,7 +238,7 @@ move dataset，将分好的训练集、验证集文件都移动到对应文件�
 '''
 
 
-def fun5(data_f,source_path,target_path):
+def fun5(data_f, source_path, target_path):
     lines = data_f.read().split('\n')
     files = []
     for line in lines:

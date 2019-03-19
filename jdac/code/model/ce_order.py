@@ -78,9 +78,9 @@ class CNN(object):
                              shape=[-1, self.config.FACT_LEN, 1, self.config.EMBEDDING_DIM])
             k_3 = tf.reshape(tf.keras.backend.repeat_elements(k_3_init, rep=self.config.FACT_LEN, axis=1),
                              shape=[-1, self.config.FACT_LEN, 1, self.config.EMBEDDING_DIM])
-            input_x_epd = tf.expand_dims(input_x, axis=2) # [ ,30,1,128]
+            input_x_epd = tf.expand_dims(input_x, axis=2)  # [ ,30,1,128]
             # fun1[a,b,c,e]=input_x_epd[a,b,c,d]*weight_1[d,e]
-            fun1 = tf.einsum('abcd,de->abce', input_x_epd, weight_1)  #事实与权重
+            fun1 = tf.einsum('abcd,de->abce', input_x_epd, weight_1)  # 事实与权重
             # [a,b,c,f]=fun1[a,b,c,d]*k_2[a,b,d,f]
             # relu(x)=max(0,x)
             # sigmoid(x)=1/(1+exp(-x))

@@ -51,7 +51,7 @@ def data_load(data_f, config, flag=3):
         # 添加知识
         input_ks.append(zs_matrix)
 
-    print('input_x.shape:', len(input_ks[9]))
+    # print('input_x.shape:', len(input_ks[9]))
     # 将事实和法条都改为模型固定的长度
     train_1 = kr.preprocessing.sequence.pad_sequences(np.array(input_x1), config.FACT_LEN)
     train_2 = kr.preprocessing.sequence.pad_sequences(np.array(input_x2), config.LAW_LEN)
@@ -62,15 +62,27 @@ def data_load(data_f, config, flag=3):
 
 # compute context
 def add_context(input_x):
+    print("shape to add content ")
+    print(input_x.shape)
     batch_size = input_x.shape[0]
     new_input_x = []
     for _ in range(batch_size):
         sample = []
-        for i in range(1, input_x.shape[1]):
+        sample.append((input_x[_, 0] + input_x[_, 1]) / 2)
+        for i in range(1, input_x.shape[1]-1):
             ctx = (input_x[_, i - 1] + input_x[_, i + 1]) / 2
             sample.append(ctx)
+        sample.append((input_x[_, input_x.shape[1]-2] + input_x[_, input_x.shape[1]-1]) / 2)
         new_input_x.append(sample)
     return np.array(new_input_x)
+
+
+def data_load_with_content(data_f, config, flag=3):
+    train_1, train_2, train_ks, train_output = data_load(data_f, config, flag)
+    new_train_1 = add_context(train_1)
+    new_train_2 = add_context(train_2)
+    new_train_ks = add_context(train_ks)
+    return new_train_1, new_train_2, new_train_ks, train_output
 
 
 # 生成批次数据（事实，法条，知识，标签）
