@@ -1,3 +1,1 @@
-import numpy
-list1 = []
-print(list1.shape)
+print("1")

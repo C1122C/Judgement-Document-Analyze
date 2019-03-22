@@ -24,6 +24,7 @@ def data_convert(vectors):
 def data_load(data_f, config, flag=3):
     input_x1, input_x2, input_ks, input_y = [], [], [], []
     lines = data_f.read().split('\n')
+    # for i in range(130):
     for i in range(len(lines)):
         line = lines[i]
         # print('index:', i)
@@ -58,31 +59,6 @@ def data_load(data_f, config, flag=3):
     train_ks = np.array(input_ks)
 
     return train_1, train_2, train_ks, np.array(input_y)
-
-
-# compute context
-def add_context(input_x):
-    print("shape to add content ")
-    print(input_x.shape)
-    batch_size = input_x.shape[0]
-    new_input_x = []
-    for _ in range(batch_size):
-        sample = []
-        sample.append((input_x[_, 0] + input_x[_, 1]) / 2)
-        for i in range(1, input_x.shape[1]-1):
-            ctx = (input_x[_, i - 1] + input_x[_, i + 1]) / 2
-            sample.append(ctx)
-        sample.append((input_x[_, input_x.shape[1]-2] + input_x[_, input_x.shape[1]-1]) / 2)
-        new_input_x.append(sample)
-    return np.array(new_input_x)
-
-
-def data_load_with_content(data_f, config, flag=3):
-    train_1, train_2, train_ks, train_output = data_load(data_f, config, flag)
-    new_train_1 = add_context(train_1)
-    new_train_2 = add_context(train_2)
-    new_train_ks = add_context(train_ks)
-    return new_train_1, new_train_2, new_train_ks, train_output
 
 
 # 生成批次数据（事实，法条，知识，标签）

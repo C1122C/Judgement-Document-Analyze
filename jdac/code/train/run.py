@@ -8,8 +8,8 @@ from datetime import timedelta
 import numpy as np
 import tensorflow as tf
 from sklearn import metrics
-from jdac.code.model.ce_order import ModelConfig, CNN
-from jdac.code.train.loader import batch_iter, batch_iter_test, data_load ,data_load_with_content
+from jdac.code.model.ce_order_con import ModelConfig, CNN
+from jdac.code.train.loader import batch_iter, batch_iter_test, data_load
 
 data_dir = '../../source/set_4'
 train_path = data_dir+'/train.txt'
@@ -49,6 +49,7 @@ if not os.path.exists(tensor_board_dir):
 
 config = ModelConfig()
 model = CNN(config)
+
 
 
 # 获取已用时间
@@ -148,6 +149,7 @@ def train():
     require_improvement = 1000  # 如果超过1000轮未提升，提前结束训练
 
     flag = False
+
     for epoch in range(config.num_epochs):
         print('Epoch:', epoch + 1)
         batch_train = batch_iter(train_1, train_2, train_ks, train_output, config.batch_size)
@@ -158,73 +160,6 @@ def train():
                 s = session.run(merged_summary, feed_dict=feed_dict)
                 writer.add_summary(s, total_batch)
 
-            if total_batch % config.print_per_batch == 0:
-                # 每多少轮次输出在训练集和验证集上的性能
-                feed_dict[model.keep_prob] = 1.0
-                loss_train, acc_train = session.run([model.loss, model.acc], feed_dict=feed_dict)
-                loss_val, acc_val = evaluate(session, val_1, val_2, val_ks, val_output)  # 验证当前会话中的模型的loss和acc
-
-                if acc_val > best_acc_val:
-                    # 保存最好结果
-                    best_acc_val = acc_val
-                    last_improved = total_batch
-                    saver.save(sess=session, save_path=save_path)
-                    improved_str = '*'
-                else:
-                    improved_str = ''
-
-                time_dif = get_time_dif(start_time)
-                msg = 'Iter: {0:>6}, Train Loss: {1:>6.2}, Train Acc: {2:>7.2%},' \
-                      + ' Val Loss: {3:>6.2}, Val Acc: {4:>7.2%}, Time: {5} {6}'
-                print(msg.format(total_batch, loss_train, acc_train, loss_val, acc_val, time_dif, improved_str))
-
-            session.run(model.optim, feed_dict=feed_dict)  # 运行优化
-            total_batch += 1
-
-            if total_batch - last_improved > require_improvement:
-                # 验证集正确率长期不提升，提前结束训练
-                print("No optimization for a long time, auto-stopping...")
-                flag = True
-                break  # 跳出循环
-        if flag:  # 同上
-            break
-
-
-def train_try():
-    print("try adding content**********************************")
-    # 配置 Saver
-    saver = tf.train.Saver()
-    print("Loading training and validation data...")
-    start_time = time.time()
-    # 载入训练集
-    # 事实、法条、知识、标记
-    train_1, train_2, train_ks, train_output = data_load_with_content(t_f, config, ks_flag)
-    print('train len:', train_1.shape)
-    # 载入验证集
-    # 事实、法条、知识、标记
-    val_1, val_2, val_ks, val_output = data_load(v_f, config, ks_flag)
-    print('validation len:', len(val_1))
-
-    time_dif = get_time_dif(start_time)
-    print("Time usage:", time_dif)
-
-    # 创建session
-    session = tf.Session()
-    session.run(tf.global_variables_initializer())
-
-    print('Training and evaluating...')
-    start_time = time.time()
-    total_batch = 0  # 总批次
-    best_acc_val = 0.0  # 最佳验证集准确率
-    last_improved = 0  # 记录上一次提升批次
-    require_improvement = 1000  # 如果超过1000轮未提升，提前结束训练
-
-    flag = False
-    for epoch in range(config.num_epochs):
-        print('Epoch:', epoch + 1)
-        batch_train = batch_iter(train_1, train_2, train_ks, train_output, config.batch_size)
-        for x1_batch, x2_batch, ks_batch, y_batch in batch_train:
-            feed_dict = feed_data(x1_batch, x2_batch, ks_batch, y_batch, config.dropout_keep_prob)
             if total_batch % config.print_per_batch == 0:
                 # 每多少轮次输出在训练集和验证集上的性能
                 feed_dict[model.keep_prob] = 1.0
@@ -352,6 +287,6 @@ def test_try():
     return y_test_cls, y_pred_cls
 
 
-# train_try()
+train()
 # test()
 test_try()
