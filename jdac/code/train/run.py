@@ -8,7 +8,7 @@ from datetime import timedelta
 import numpy as np
 import tensorflow as tf
 from sklearn import metrics
-from jdac.code.model.ce_order_con import ModelConfig, CNN
+from jdac.code.model.ce_order import ModelConfig, CNN
 from jdac.code.train.loader import batch_iter, batch_iter_test, data_load
 
 data_dir = '../../source/set_4'
@@ -35,17 +35,27 @@ sing_leuse = '3'
 relu = 'False'  # default is true
 
 save_dir = '../../result'
-ck_path = 'times-1'
-tb_path = 'times-1'
-save_path = save_dir+'/checkpoints/'+ck_path+'/best_validation'
-tensor_board_dir = save_dir + '/tensor_board/' + tb_path
-new_save_path = save_dir + '/checkpoints/' + ck_path + '/best_validation_content'
+result = '../../record/result.txt'
+tm_path = 'times-1'
+org_save_path = save_dir+'/checkpoints/'+tm_path+'/original/best_validation'
+org_tensor_board_dir = save_dir + '/tensor_board/' + tm_path+'/original/best_validation'
+con30_save_path = save_dir + '/checkpoints/' + tm_path + '/con30/best_validation'
+con30_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con30/best_validation'
+con_v_save_path = save_dir + '/checkpoints/' + tm_path + '/con_v/best_validation'
+con_v_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con_v/best_validation'
 
-if not os.path.exists(save_path):
-    os.makedirs(save_path)
-if not os.path.exists(tensor_board_dir):
-    os.makedirs(tensor_board_dir)
-
+if not os.path.exists(org_save_path):
+    os.makedirs(org_save_path)
+if not os.path.exists(org_tensor_board_dir):
+    os.makedirs(org_tensor_board_dir)
+if not os.path.exists(con30_save_path):
+    os.makedirs(con30_save_path)
+if not os.path.exists(con30_tensor_board_dir):
+    os.makedirs(con30_tensor_board_dir)
+if not os.path.exists(con_v_save_path):
+    os.makedirs(con_v_save_path)
+if not os.path.exists(con_v_tensor_board_dir):
+    os.makedirs(con_v_tensor_board_dir)
 
 config = ModelConfig()
 model = CNN(config)
@@ -108,14 +118,11 @@ def train():
     print("Configuring TensorBoard and Saver...")
     # 配置 Tensor_board，重新训练时，请将tensor_board文件夹删除，不然图会覆盖
 
-    if not os.path.exists(tensor_board_dir):
-        os.makedirs(tensor_board_dir)
-
     # 结果可视化与存储
     tf.summary.scalar("loss", model.loss)  # 可视化loss
     tf.summary.scalar("accuracy", model.acc)  # 可视化acc
     merged_summary = tf.summary.merge_all()   # 将所有操作合并输出
-    writer = tf.summary.FileWriter(tensor_board_dir)  # 将summary data写入磁盘
+    writer = tf.summary.FileWriter(con30_tensor_board_dir)  # 将summary data写入磁盘
 
     # 配置 Saver
     saver = tf.train.Saver()
@@ -170,7 +177,7 @@ def train():
                     # 保存最好结果
                     best_acc_val = acc_val
                     last_improved = total_batch
-                    saver.save(sess=session, save_path=new_save_path)
+                    saver.save(sess=session, save_path=con30_save_path)
                     improved_str = '*'
                 else:
                     improved_str = ''
@@ -193,20 +200,24 @@ def train():
 
 
 # 测试模型
-def test():
-    print("Loading test data...")
+def test(dic):
+    print("Loading test data for "+dic+"......")
+    res = open(result, 'a')
+    res.write("Test for "+dic+"\n")
     start_time = time.time()
     x1_test, x2_test, ks_test, y_test = data_load(test_f, config, flag=ks_flag)
 
     session = tf.Session()
     session.run(tf.global_variables_initializer())
     saver = tf.train.Saver()
-    saver.restore(sess=session, save_path=save_path)  # 读取保存的模型
+    saver.restore(sess=session, save_path=dic)  # 读取保存的模型
 
     print('Testing...')
     loss_test, acc_test = evaluate_test(session, x1_test, x2_test, ks_test, y_test)
     msg = 'Test Loss: {0:>6.2}, Test Acc: {1:>7.2%}'
     print(msg.format(loss_test, acc_test))
+    res.write(msg.format(loss_test, acc_test))
+    res.write("\n")
 
     batch_size = 128
     data_len = len(x1_test)
@@ -229,58 +240,13 @@ def test():
 
     print("Precision, Recall and F1-Score...")
     print(metrics.classification_report(y_test_cls, y_pred_cls, digits=4))  # 直接计算准确率，召回率和f值
-
+    res.write(metrics.classification_report(y_test_cls, y_pred_cls, digits=4))
     # 混淆矩阵
     print("Confusion Matrix...")
     cm = metrics.confusion_matrix(y_test_cls, y_pred_cls)
     print(cm)
-
-    time_dif = get_time_dif(start_time)
-    print("Time usage:", time_dif)
-    return y_test_cls, y_pred_cls
-
-
-def test_try():
-    print("Loading test data for content**********************")
-    start_time = time.time()
-    x1_test, x2_test, ks_test, y_test = data_load(test_f, config, flag=ks_flag)
-
-    session = tf.Session()
-    session.run(tf.global_variables_initializer())
-    saver = tf.train.Saver()
-    saver.restore(sess=session, save_path=new_save_path)  # 读取保存的模型
-
-    print('Testing...')
-    loss_test, acc_test = evaluate_test(session, x1_test, x2_test, ks_test, y_test)
-    msg = 'Test Loss: {0:>6.2}, Test Acc: {1:>7.2%}'
-    print(msg.format(loss_test, acc_test))
-
-    batch_size = 128
-    data_len = len(x1_test)
-    num_batch = int(data_len / batch_size)
-
-    y_test_cls = np.argmax(y_test, 1)
-    y_pred_cls = np.zeros(shape=len(x1_test), dtype=np.int32)  # 保存预测结果
-
-    for i in range(num_batch):  # 逐批次处理
-        start_id = i * batch_size
-        end_id = min((i + 1) * batch_size, data_len)
-        feed_dict = {
-            model.input_x1: x1_test[start_id:end_id],
-            model.input_x2: x2_test[start_id:end_id],
-            model.input_ks: ks_test[start_id:end_id],
-            model.keep_prob: 1.0   # 这个表示测试时不使用dropout对神经元过滤
-        }
-        # 将所有批次的预测结果都存放在y_pred_cls中
-        y_pred_cls[start_id:end_id] = session.run(model.y_pred_cls, feed_dict=feed_dict)
-
-    print("Precision, Recall and F1-Score...")
-    print(metrics.classification_report(y_test_cls, y_pred_cls, digits=4))  # 直接计算准确率，召回率和f值
-
-    # 混淆矩阵
-    print("Confusion Matrix...")
-    cm = metrics.confusion_matrix(y_test_cls, y_pred_cls)
-    print(cm)
+    res.write(str(cm))
+    res.close()
 
     time_dif = get_time_dif(start_time)
     print("Time usage:", time_dif)
@@ -288,5 +254,6 @@ def test_try():
 
 
 train()
-# test()
-test_try()
+test(org_save_path)
+# test(con30_save_path)
+
