@@ -72,8 +72,8 @@ class CNN(object):
                                                     stddev=0, seed=3), trainable=True, name='w3')
 
             k_1_init, k_2_init, k_3_init = ks[:, 0, :], ks[:, 1, :], ks[:, 2, :]  # 分别切取先验知识的0，1，2行
-            k_1 = tf.reshape(tf.keras.backend.repeat_elements(k_1_init, rep=self.config.FACT_LEN, axis=1),  # 变为[ ,128*30]
-                             shape=[-1, self.config.FACT_LEN, 1, self.config.EMBEDDING_DIM])  # [ ,30,1,128]变形
+            k_1 = tf.reshape(tf.keras.backend.repeat_elements(k_1_init, rep=self.config.FACT_LEN, axis=1),
+                             shape=[-1, self.config.FACT_LEN, 1, self.config.EMBEDDING_DIM])
             k_2 = tf.reshape(tf.keras.backend.repeat_elements(k_2_init, rep=self.config.FACT_LEN, axis=1),
                              shape=[-1, self.config.FACT_LEN, 1, self.config.EMBEDDING_DIM])
             k_3 = tf.reshape(tf.keras.backend.repeat_elements(k_3_init, rep=self.config.FACT_LEN, axis=1),

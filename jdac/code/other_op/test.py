@@ -1,1 +1,2 @@
-print(str([1,2],[1,2]))
+import theano
+print(theano.config.floatX)

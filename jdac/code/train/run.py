@@ -8,7 +8,7 @@ from datetime import timedelta
 import numpy as np
 import tensorflow as tf
 from sklearn import metrics
-from jdac.code.model.ce_order import ModelConfig, CNN
+from jdac.code.model.ce_order_con3 import ModelConfig, CNN
 from jdac.code.train.loader import batch_iter, batch_iter_test, data_load
 
 data_dir = '../../source/set_4'
@@ -36,7 +36,7 @@ relu = 'False'  # default is true
 
 save_dir = '../../result'
 result = '../../record/result.txt'
-tm_path = 'times-1'
+tm_path = 'times-5'
 org_save_path = save_dir+'/checkpoints/'+tm_path+'/original/best_validation'
 org_tensor_board_dir = save_dir + '/tensor_board/' + tm_path+'/original/best_validation'
 con30_save_path = save_dir + '/checkpoints/' + tm_path + '/con30/best_validation'
@@ -122,7 +122,7 @@ def train():
     tf.summary.scalar("loss", model.loss)  # 可视化loss
     tf.summary.scalar("accuracy", model.acc)  # 可视化acc
     merged_summary = tf.summary.merge_all()   # 将所有操作合并输出
-    writer = tf.summary.FileWriter(con30_tensor_board_dir)  # 将summary data写入磁盘
+    writer = tf.summary.FileWriter(con_v_tensor_board_dir)  # 将summary data写入磁盘
 
     # 配置 Saver
     saver = tf.train.Saver()
@@ -177,7 +177,7 @@ def train():
                     # 保存最好结果
                     best_acc_val = acc_val
                     last_improved = total_batch
-                    saver.save(sess=session, save_path=con30_save_path)
+                    saver.save(sess=session, save_path=con_v_save_path)
                     improved_str = '*'
                 else:
                     improved_str = ''
@@ -246,14 +246,18 @@ def test(dic):
     cm = metrics.confusion_matrix(y_test_cls, y_pred_cls)
     print(cm)
     res.write(str(cm))
-    res.close()
+    res.write("\n")
 
     time_dif = get_time_dif(start_time)
     print("Time usage:", time_dif)
+    res.write("Time usage:")
+    res.write(str(time_dif))
+    res.write("\n")
+    res.close()
     return y_test_cls, y_pred_cls
 
 
 train()
-test(org_save_path)
-# test(con30_save_path)
-
+#test(org_save_path)
+#test(con30_save_path)
+test(con_v_save_path)
