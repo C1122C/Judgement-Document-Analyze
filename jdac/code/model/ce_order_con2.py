@@ -55,8 +55,7 @@ class CNN(object):
         self.new_x2_word = self.mirror_gate1_word(self.new_x1_mean_word, self.input_x2)
         # 以事实为先验知识筛选出的法条[ ,30,128]
         # shape[128,30,256]
-        self.x1_bi, self.x2_bi = self.bi_gru(self.input_x1, self.input_x2)
-        op1, op2 = self.conv(self.new_x1_word, self.new_x2_word, self.new_x1, self.new_x2, self.x1_bi, self.x2_bi)
+        op1, op2 = self.conv(self.new_x1_word, self.new_x2_word, self.new_x1, self.new_x2)
         #op1_word, op2_word = self.conv(self.new_x1_word, self.new_x2_word)
         # op1,op2是经过卷积提取出的向量
 
@@ -226,20 +225,10 @@ class CNN(object):
             n_vector = tf.reshape(n_vector_, shape=tf.shape(input_y))
         return n_vector
 
-    def bi_gru(self, fact, law):
-        # 优：考虑参数设置
-        sentence2vec = BiGRU(n_in=128, n_hidden=128, n_out=200, batch_size=128)
-        # 优：考虑return_list是否为true
-
-        # 优：考虑return_list是否为true
-        # shape[128,30,256]
-        q_emb = sentence2vec(fact, return_list=True)
-        r_emb = sentence2vec(law, return_list=True)
-        return q_emb, r_emb
 
     # 生成卷积
     # bi通道shape[128,30,256],剩下两个[128,30,128]
-    def conv(self, x_word, y_word, input_x, input_y, x_bi, y_bi):
+    def conv(self, x_word, y_word, input_x, input_y):
         with tf.name_scope("conv"):
             # 对事实输入生成卷积，过滤器个数256，一维卷积窗口大小5
             # 输入30*128，卷积尺寸5*128，得到26*1的向量，因为有256个过滤器，所以共有256个26*1向量
@@ -254,14 +243,7 @@ class CNN(object):
                                      name='conv4')
             # op2[128,256] con30law
             #op_con30law = tf.reduce_max(conv2, reduction_indices=[1], name='gmp2')
-            conv3 = tf.layers.conv1d(x_bi, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv5')
-            # op3[128,256] bi_fact
-            #op_bi_fact = tf.reduce_max(conv3, reduction_indices=[1], name='gmp3')
-            conv4 = tf.layers.conv1d(y_bi, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv6')
-            # op4[128,256] bi_law
-            #op_bi_law = tf.reduce_max(conv4, reduction_indices=[1], name='gmp4')
+
             conv5 = tf.layers.conv1d(x_word, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
                                      name='conv7')
             # op5[128,256] word_fact
@@ -270,11 +252,9 @@ class CNN(object):
                                      name='conv8')
             # op6[128,256] word_law
             #op_word_law = tf.reduce_max(conv6, reduction_indices=[1], name='gmp6')
-            # shape[128,26,256,3]
-            fact_all = tf.concat([tf.expand_dims(conv5, axis=-1), tf.expand_dims(conv1, axis=-1),
-                                  tf.expand_dims(conv3, axis=-1)], axis=3)
-            law_all = tf.concat([tf.expand_dims(conv6, axis=-1), tf.expand_dims(conv2, axis=-1),
-                                 tf.expand_dims(conv4, axis=-1)], axis=3)
+            # shape[128,26,256,2]
+            fact_all = tf.concat([tf.expand_dims(conv5, axis=-1), tf.expand_dims(conv1, axis=-1)], axis=3)
+            law_all = tf.concat([tf.expand_dims(conv6, axis=-1), tf.expand_dims(conv2, axis=-1)], axis=3)
             # shape[128,22,252,256]
             conv7 = tf.layers.conv2d(fact_all, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
                                      name='conv9')
@@ -323,113 +303,3 @@ class CNN(object):
             # 由于input_y也是onehot编码，因此，调用tf.argmax(self.input_y)得到的是1所在的下标
             self.acc = tf.reduce_mean(tf.cast(correct_pred, tf.float32))
 
-
-def ortho_weight(ndim):
-    W = np.random.randn(ndim, ndim)
-    u, s, v = np.linalg.svd(W)
-    return u.astype('float32')
-
-
-# 返回size
-# glorot正常初始化,它从以0为中心的截断正态分布中抽取样本,stddev = sqrt(2 / (fan_in + fan_out)),其中 fan_in 是权重张量的输入单元数,而 fan_out 是权重张量中的输出单位数
-def glorot_uniform(size):
-    fan_in, fan_out = size
-    s = np.sqrt(6. / (fan_in + fan_out))
-    return np.random.uniform(size=size, low=-s, high=s).astype("float32")
-
-
-class BiGRU(object):
-    def __init__(self, n_in, n_hidden, n_out, batch_size=128):
-        # 建立正向反向两个GRU
-        self.gru_1 = GRU(n_in, n_hidden, n_out, batch_size=batch_size)
-        self.gru_2 = GRU(n_in, n_hidden, n_out, batch_size=batch_size)
-
-        self.params = self.gru_1.params
-        self.params += self.gru_2.params
-
-    def __call__(self, input, return_list=False):
-        # 倒置第二维
-        # input:[128,30,128]
-        # reverse_input:[128,30,128]词序反
-        reverse_input = input[:, ::-1, :]
-
-        # 返回两个隐藏向量在第三维的连接，[x,y,2*z]
-        res1 = self.gru_1(input, return_list)
-        if return_list:
-            res2 = self.gru_2(reverse_input, return_list)[:, ::-1, :]
-            return tf.concat([res1, res2], axis=2)
-        else:
-            res2 = self.gru_2(reverse_input, return_list)
-        return tf.concat([res1, res2], axis=1)
-
-
-# 门控递归单元
-# 将文本编码为隐藏向量，z,r表示两个方向
-class GRU(object):
-    def __init__(self, n_in, n_hidden, n_out, activation=tf.nn.tanh, inner_activation=tf.nn.sigmoid,
-                 output_type='real', batch_size=128):
-
-        self.activation = activation
-        self.inner_activation = inner_activation
-        self.output_type = output_type
-
-        self.batch_size = batch_size
-        self.n_hidden = n_hidden
-
-        # 递归权重是共享的变量，theano.shared将变量设为全局，borrow=True对数据的改变会影响原始数据
-        # U_z[n_hidden,n_hidden]正态
-        self.U_z = tf.Variable(ortho_weight(n_hidden), dtype="float32", trainable=True, name='U_z')
-        # W_z[n_in,n_hidden]
-        self.W_z = tf.Variable(glorot_uniform((n_in, n_hidden)), dtype="float32", trainable=True, name='W_z')
-        # b_z[n_hidden,]
-        self.b_z = tf.Variable(np.zeros(n_hidden,), dtype="float32", trainable=True, name='b_z')
-        # U_r[n_hidden,n_hidden]正态
-        self.U_r = tf.Variable(ortho_weight(n_hidden), dtype="float32", trainable=True, name='U_r')
-        # W_r[n_in,n_hidden]
-        self.W_r = tf.Variable(glorot_uniform((n_in, n_hidden)), dtype="float32", trainable=True, name='W_r')
-        # b_r[n_hidden,]
-        self.b_r = tf.Variable(np.zeros(n_hidden,), dtype="float32", trainable=True, name='b_r')
-
-        # U_h[n_hidden,n_hidden]正态
-        self.U_h = tf.Variable(ortho_weight(n_hidden), dtype="float32", trainable=True, name='U_h')
-        # W_h[n_in,n_hidden]
-        self.W_h = tf.Variable(glorot_uniform((n_in, n_hidden)), dtype="float32", trainable=True, name='W_h')
-        # b_h[n_hidden,]
-        self.b_h = tf.Variable(np.zeros(n_hidden,), dtype="float32", trainable=True, name='b_h')
-
-        self.params = [self.W_z, self.W_h, self.W_r,
-                       self.U_h, self.U_r, self.U_z,
-                       self.b_h, self.b_r, self.b_z]
-
-    def __call__(self, input, return_list=False):
-        # 构建循环图(每一步执行的函数，迭代的输入，初始化输出)
-        # dimshuffle(1,0,2)表示A.B.C-》B.A.C
-        # scan沿着第一维展开输入，所以变序之后，每一步的输入就变成了批次内所有向量的第一个词的向量
-        # input[128,30,128],变换后[30,128,128]
-        input_1 = tf.transpose(input, perm=[1, 0, 2])
-        self.h_l= tf.scan(self.step2, elems=input_1)
-        # B.A.C->A.B.C
-        self.h_l = tf.transpose(self.h_l, perm=[1, 0, 2])
-        if return_list:
-            return self.h_l
-        # 取第二维的最后一个
-        return self.h_l[:, -1, :]
-
-    # 以下两个方法用于产生Sx和Sy的隐藏向量
-    # input[128,128]
-    def step2(self, x_t, h_tm1):
-        # x_z = x_t*W_z+b_z
-        x_z = tf.matmul(x_t, self.W_z) + self.b_z
-        # x_r = x_t*W_r+b_r
-        x_r = tf.matmul(x_t, self.W_r) + self.b_r
-        # x_h = x_t*W_h+b_h
-        x_h = tf.matmul(x_t, self.W_h) + self.b_h
-        # z = sigmoid(x_z+h_tm1*U_z)
-        z = self.inner_activation(x_z + tf.matmul(h_tm1, self.U_z))
-        # r = sigmoid(x_r+h_tm1*U_r)
-        r = self.inner_activation(x_r + tf.matmul(h_tm1, self.U_r))
-        # hh = tanh(x_h+r*h_tm1*U_h)
-        hh = self.activation(x_h + tf.matmul(r * h_tm1, self.U_h))
-        # h = z*h_tm1+(1-z)*hh
-        h = z * h_tm1 + (1 - z) * hh
-        return h

@@ -117,7 +117,7 @@ Test Loss:   0.25, Test Acc:  78.25%
 weighted avg     0.8601    0.8619    0.8605       869
 [[541  50]
  [ 70 208]]
-Test for ../../result/checkpoints/times-5/con_v/best_validation
+Test for ../../result/checkpoints/times-1/con_v/best_validation
 Test Loss:   0.26, Test Acc:  76.99%
               precision    recall  f1-score   support
 
@@ -130,3 +130,16 @@ weighted avg     0.8469    0.8493    0.8473       869
 [[538  53]
  [ 78 200]]
 Time usage:0:00:37
+Test for ../../result/checkpoints/times-2/con_v/best_validation
+Test Loss:   0.28, Test Acc:  77.22%
+              precision    recall  f1-score   support
+
+           0     0.8825    0.9019    0.8921       591
+           1     0.7811    0.7446    0.7624       278
+
+   micro avg     0.8516    0.8516    0.8516       869
+   macro avg     0.8318    0.8232    0.8272       869
+weighted avg     0.8500    0.8516    0.8506       869
+[[533  58]
+ [ 71 207]]
+Time usage:0:01:05

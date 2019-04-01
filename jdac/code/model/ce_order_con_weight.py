@@ -247,47 +247,41 @@ class CNN(object):
                                      name='conv3')
             # 在第二维的26个值中选出最大的，得到一个有256个值的向量
             # op1[128,256] con30fact
-            #op_con30fact = tf.reduce_max(conv1, reduction_indices=[1], name='gmp1')
+            op_con30fact = tf.reduce_max(conv1, reduction_indices=[1], name='gmp1')
 
             # 对法条输入生成卷积，过滤器个数256，一维卷积窗口大小5
             conv2 = tf.layers.conv1d(input_y, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
                                      name='conv4')
             # op2[128,256] con30law
-            #op_con30law = tf.reduce_max(conv2, reduction_indices=[1], name='gmp2')
+            op_con30law = tf.reduce_max(conv2, reduction_indices=[1], name='gmp2')
             conv3 = tf.layers.conv1d(x_bi, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
                                      name='conv5')
             # op3[128,256] bi_fact
-            #op_bi_fact = tf.reduce_max(conv3, reduction_indices=[1], name='gmp3')
+            op_bi_fact = tf.reduce_max(conv3, reduction_indices=[1], name='gmp3')
             conv4 = tf.layers.conv1d(y_bi, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
                                      name='conv6')
             # op4[128,256] bi_law
-            #op_bi_law = tf.reduce_max(conv4, reduction_indices=[1], name='gmp4')
+            op_bi_law = tf.reduce_max(conv4, reduction_indices=[1], name='gmp4')
             conv5 = tf.layers.conv1d(x_word, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
                                      name='conv7')
             # op5[128,256] word_fact
-            #op_word_fact = tf.reduce_max(conv5, reduction_indices=[1], name='gmp5')
+            op_word_fact = tf.reduce_max(conv5, reduction_indices=[1], name='gmp5')
             conv6 = tf.layers.conv1d(y_word, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
                                      name='conv8')
             # op6[128,256] word_law
-            #op_word_law = tf.reduce_max(conv6, reduction_indices=[1], name='gmp6')
-            # shape[128,26,256,3]
-            fact_all = tf.concat([tf.expand_dims(conv5, axis=-1), tf.expand_dims(conv1, axis=-1),
-                                  tf.expand_dims(conv3, axis=-1)], axis=3)
-            law_all = tf.concat([tf.expand_dims(conv6, axis=-1), tf.expand_dims(conv2, axis=-1),
-                                 tf.expand_dims(conv4, axis=-1)], axis=3)
-            # shape[128,22,252,256]
-            conv7 = tf.layers.conv2d(fact_all, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv9')
-            # shape[128,252,256]
-            op1 = tf.reduce_max(conv7, reduction_indices=[1], name='gmp7')
-            # shape[128,256]
-            op1_final = tf.reduce_max(op1, reduction_indices=[1], name='gmp9')
-            conv8 = tf.layers.conv2d(law_all, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv10')
-            op2 = tf.reduce_max(conv8, reduction_indices=[1], name='gmp8')
-            op2_final = tf.reduce_max(op2, reduction_indices=[1], name='gmp10')
+            op_word_law = tf.reduce_max(conv6, reduction_indices=[1], name='gmp6')
+            # shape[128,256*3]
+            fact_all = tf.concat([op_word_fact, op_con30fact, op_bi_fact], axis=1)
+            law_all = tf.concat([op_word_law, op_con30law, op_bi_law], axis=1)
+            weight_1 = tf.Variable(tf.random_normal([256*3, 256],
+                                                    stddev=0, seed=1), trainable=True, name='w1')
+            weight_2 = tf.Variable(tf.random_normal([256 * 3, 256],
+                                                    stddev=0, seed=1), trainable=True, name='w2')
 
-            return op1_final, op2_final
+            op1 = tf.matmul(fact_all, weight_1)
+            op2 = tf.matmul(law_all, weight_2)
+
+            return op1, op2
 
     # op size[128,256]
     def match(self, op1, op2):
