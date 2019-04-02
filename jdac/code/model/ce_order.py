@@ -62,7 +62,7 @@ class CNN(object):
 
     # 结合事实与先验知识
     def gate1(self, ks, input_x):
-        with tf.name_scope("gate"):
+        with tf.name_scope("gate_o"):
             weight_1 = tf.Variable(tf.random_normal([self.config.EMBEDDING_DIM, 1],
                                                     stddev=0, seed=1), trainable=True, name='w1')
             # 权重初始值随机生成，矩阵128*1,正态分布标准差为0，随机种子为1[128,1]
@@ -107,7 +107,7 @@ class CNN(object):
         return n_vector, tf.concat([ksw_1, ksw_2, ksw_3], axis=2)
 
     def precessf2(self, input_x):
-        with tf.name_scope("FactPrecess"):
+        with tf.name_scope("FactPrecess_o"):
             # 将输入的第一维和第三维转置[128,30, ]
             input_x_ = tf.transpose(input_x, perm=[0, 2, 1])
             # input_x_的每行最大的5个数,[0]表示只要数值，不要位置
@@ -122,7 +122,7 @@ class CNN(object):
     根据事实作为先验知识去过滤法条
     '''
     def mirror_gate1(self, input_x, input_y):
-        with tf.name_scope("Fact2Law"):
+        with tf.name_scope("Fact2Law_o"):
             # [128,1]
             weight_1 = tf.Variable(tf.random_normal([self.config.EMBEDDING_DIM, 1],
                                                     stddev=0, seed=1), trainable=True, name='w1')
@@ -142,37 +142,37 @@ class CNN(object):
 
     # 生成卷积
     def conv(self, input_x, input_y):
-        with tf.name_scope("conv"):
+        with tf.name_scope("conv_o"):
             # 对事实输入生成卷积，过滤器个数256，一维卷积窗口大小5
             # 输入30*128，卷积尺寸5*128，得到26*1的向量，因为有256个过滤器，所以共有256个26*1向量
             conv1 = tf.layers.conv1d(input_x, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv1')
+                                     name='conv1_o')
             # 在第二维的26个值中选出最大的，得到一个有256个值的向量
             op1 = tf.reduce_max(conv1, reduction_indices=[1], name='gmp1')
 
             # 对法条输入生成卷积，过滤器个数256，一维卷积窗口大小5
             conv2 = tf.layers.conv1d(input_y, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv2')
+                                     name='conv2_o')
             op2 = tf.reduce_max(conv2, reduction_indices=[1], name='gmp2')
 
             return op1, op2
 
     def match(self, op1, op2):
-        with tf.name_scope("match"):
+        with tf.name_scope("match_o"):
             h = tf.concat([op1, op2], axis=1)  # [batch,FILTERS*2]
             # 全连接层，输出大小为100，使用偏置项，参与训练
             fc = tf.layers.dense(inputs=h, units=self.config.LAYER_UNITS, use_bias=True,
-                                 trainable=True, name="fc1")
+                                 trainable=True, name="fc1_o")
             fc = tf.contrib.layers.dropout(fc, self.keep_prob)  # 根据比例keep_prob输出输入数据，最终返回一个张量
             fc = tf.nn.relu(fc)  # 激活函数，此时fc的维度是hidden_dim
 
             # 分类器,以fc作为输入，输出大小为2
             self.logits = tf.layers.dense(fc, self.config.NUM_CLASS,
-                                          name='fc2')  # 将fc从[batch_size,hidden_dim]映射到[batch_size,num_class]输出
+                                          name='fc2_o')  # 将fc从[batch_size,hidden_dim]映射到[batch_size,num_class]输出
             # softmax将向量上的数值映射成概率，argmax选出做大概率所在的索引值
             self.y_pred_cls = tf.argmax(tf.nn.softmax(self.logits), 1)
 
-        with tf.name_scope("optimize"):
+        with tf.name_scope("optimize_o"):
             # 损失函数，交叉熵，logits和了、labelsd大小都是[batch,2]
             cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.logits,
                                                                     labels=self.input_y)
@@ -182,7 +182,7 @@ class CNN(object):
             # 优化器
             self.optim = tf.train.AdamOptimizer(learning_rate=self.config.LEARNING_RATE).minimize(self.loss)
 
-        with tf.name_scope("accuracy"):
+        with tf.name_scope("accuracy_o"):
             # 准确率
             correct_pred = tf.equal(tf.argmax(self.input_y, 1),
                                     self.y_pred_cls)

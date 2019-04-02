@@ -71,7 +71,7 @@ class CNN(object):
 
     # 结合事实与先验知识
     def gate1(self, ks, input_x):
-        with tf.name_scope("gate"):
+        with tf.name_scope("gate_c3"):
             weight_1 = tf.Variable(tf.random_normal([30, self.config.EMBEDDING_DIM, 30],
                                                     stddev=0, seed=1), trainable=True, name='w1')
             # 权重初始值随机生成，矩阵128*1,正态分布标准差为0，随机种子为1[128,1]
@@ -126,7 +126,7 @@ class CNN(object):
         return n_vector, tf.concat([ksw_1, ksw_2, ksw_3], axis=2)
 
     def gate1_word(self, ks, input_x):
-        with tf.name_scope("gate_word"):
+        with tf.name_scope("gate_word_c3"):
             weight_1 = tf.Variable(tf.random_normal([self.config.EMBEDDING_DIM, 1],
                                                     stddev=0, seed=1), trainable=True, name='w1')
             # 权重初始值随机生成，矩阵128*1,正态分布标准差为0，随机种子为1[128,1]
@@ -171,7 +171,7 @@ class CNN(object):
         return n_vector, tf.concat([ksw_1, ksw_2, ksw_3], axis=2)
 
     def precessf2(self, input_x):
-        with tf.name_scope("FactPrecess"):
+        with tf.name_scope("FactPrecess_c3"):
             # 将输入的第一维和第三维转置[128,30, ]
             input_x_ = tf.transpose(input_x, perm=[0, 2, 1])
             # input_x_的每行最大的5个数,[0]表示只要数值，不要位置
@@ -186,7 +186,7 @@ class CNN(object):
     根据事实作为先验知识去过滤法条
     '''
     def mirror_gate1(self, input_x, input_y):
-        with tf.name_scope("Fact2Law"):
+        with tf.name_scope("Fact2Law_c3"):
             # [128,1]
             weight_1 = tf.Variable(tf.random_normal([30, self.config.EMBEDDING_DIM, 30],
                                                     stddev=0, seed=1), trainable=True, name='w1')
@@ -208,7 +208,7 @@ class CNN(object):
         return n_vector
 
     def mirror_gate1_word(self, input_x, input_y):
-        with tf.name_scope("Fact2Law_word"):
+        with tf.name_scope("Fact2Law_word_c3"):
             # [128,1]
             weight_1 = tf.Variable(tf.random_normal([self.config.EMBEDDING_DIM, 1],
                                                     stddev=0, seed=1), trainable=True, name='w1')
@@ -240,67 +240,43 @@ class CNN(object):
     # 生成卷积
     # bi通道shape[128,30,256],剩下两个[128,30,128]
     def conv(self, x_word, y_word, input_x, input_y, x_bi, y_bi):
-        with tf.name_scope("conv"):
+        with tf.name_scope("conv_c3"):
+            fact_all = tf.concat([x_word, input_x, x_bi], axis=2)
+            law_all = tf.concat([y_word, input_y, y_bi], axis=2)
             # 对事实输入生成卷积，过滤器个数256，一维卷积窗口大小5
             # 输入30*128，卷积尺寸5*128，得到26*1的向量，因为有256个过滤器，所以共有256个26*1向量
-            conv1 = tf.layers.conv1d(input_x, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv3')
+            conv1 = tf.layers.conv1d(fact_all, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
+                                     name='conv3_3')
             # 在第二维的26个值中选出最大的，得到一个有256个值的向量
             # op1[128,256] con30fact
-            op_con30fact = tf.reduce_max(conv1, reduction_indices=[1], name='gmp1')
+            op1 = tf.reduce_max(conv1, reduction_indices=[1], name='gmp1')
 
             # 对法条输入生成卷积，过滤器个数256，一维卷积窗口大小5
-            conv2 = tf.layers.conv1d(input_y, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv4')
+            conv2 = tf.layers.conv1d(law_all, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
+                                     name='conv4_3')
             # op2[128,256] con30law
-            op_con30law = tf.reduce_max(conv2, reduction_indices=[1], name='gmp2')
-            conv3 = tf.layers.conv1d(x_bi, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv5')
-            # op3[128,256] bi_fact
-            op_bi_fact = tf.reduce_max(conv3, reduction_indices=[1], name='gmp3')
-            conv4 = tf.layers.conv1d(y_bi, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv6')
-            # op4[128,256] bi_law
-            op_bi_law = tf.reduce_max(conv4, reduction_indices=[1], name='gmp4')
-            conv5 = tf.layers.conv1d(x_word, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv7')
-            # op5[128,256] word_fact
-            op_word_fact = tf.reduce_max(conv5, reduction_indices=[1], name='gmp5')
-            conv6 = tf.layers.conv1d(y_word, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv8')
-            # op6[128,256] word_law
-            op_word_law = tf.reduce_max(conv6, reduction_indices=[1], name='gmp6')
-            # shape[128,256*3]
-            fact_all = tf.concat([op_word_fact, op_con30fact, op_bi_fact], axis=1)
-            law_all = tf.concat([op_word_law, op_con30law, op_bi_law], axis=1)
-            weight_1 = tf.Variable(tf.random_normal([256*3, 256],
-                                                    stddev=0, seed=1), trainable=True, name='w1')
-            weight_2 = tf.Variable(tf.random_normal([256 * 3, 256],
-                                                    stddev=0, seed=1), trainable=True, name='w2')
-
-            op1 = tf.matmul(fact_all, weight_1)
-            op2 = tf.matmul(law_all, weight_2)
+            op2 = tf.reduce_max(conv2, reduction_indices=[1], name='gmp2')
 
             return op1, op2
 
     # op size[128,256]
     def match(self, op1, op2):
-        with tf.name_scope("match"):
+        with tf.name_scope("match_c3"):
             h = tf.concat([op1, op2], axis=1)  # [batch,FILTERS*2]
             # 全连接层，输出大小为100，使用偏置项，参与训练
             fc = tf.layers.dense(inputs=h, units=self.config.LAYER_UNITS, use_bias=True,
-                                 trainable=True, name="fc3")
+                                 trainable=True, name="fc3_3")
 
             fc = tf.contrib.layers.dropout(fc, self.keep_prob)  # 根据比例keep_prob输出输入数据，最终返回一个张量
             fc = tf.nn.relu(fc)  # 激活函数，此时fc的维度是hidden_dim
 
             # 分类器,以fc作为输入，输出大小为2
             self.logits = tf.layers.dense(fc, self.config.NUM_CLASS,
-                                          name='fc4')  # 将fc从[batch_size,hidden_dim]映射到[batch_size,num_class]输出
+                                          name='fc4_3')  # 将fc从[batch_size,hidden_dim]映射到[batch_size,num_class]输出
             # softmax将向量上的数值映射成概率，argmax选出做大概率所在的索引值
             self.y_pred_cls = tf.argmax(tf.nn.softmax(self.logits), 1)
 
-        with tf.name_scope("optimize"):
+        with tf.name_scope("optimize_c3"):
             # 损失函数，交叉熵，logits和了、labelsd大小都是[batch,2]
             cross_entropy = tf.nn.softmax_cross_entropy_with_logits(logits=self.logits,
                                                                     labels=self.input_y)
@@ -310,7 +286,7 @@ class CNN(object):
             # 优化器
             self.optim = tf.train.AdamOptimizer(learning_rate=self.config.LEARNING_RATE).minimize(self.loss)
 
-        with tf.name_scope("accuracy"):
+        with tf.name_scope("accuracy_c3"):
             # 准确率
             correct_pred = tf.equal(tf.argmax(self.input_y, 1),
                                     self.y_pred_cls)
@@ -382,14 +358,14 @@ class GRU(object):
         # W_r[n_in,n_hidden]
         self.W_r = tf.Variable(glorot_uniform((n_in, n_hidden)), dtype="float32", trainable=True, name='W_r')
         # b_r[n_hidden,]
-        self.b_r = tf.Variable(np.zeros(n_hidden,), dtype="float32", trainable=True, name='b_r')
+        self.b_r = tf.Variable(np.zeros(n_hidden,), dtype="float32", trainable=True, name='b_r_3')
 
         # U_h[n_hidden,n_hidden]正态
-        self.U_h = tf.Variable(ortho_weight(n_hidden), dtype="float32", trainable=True, name='U_h')
+        self.U_h = tf.Variable(ortho_weight(n_hidden), dtype="float32", trainable=True, name='U_h_3')
         # W_h[n_in,n_hidden]
-        self.W_h = tf.Variable(glorot_uniform((n_in, n_hidden)), dtype="float32", trainable=True, name='W_h')
+        self.W_h = tf.Variable(glorot_uniform((n_in, n_hidden)), dtype="float32", trainable=True, name='W_h_3')
         # b_h[n_hidden,]
-        self.b_h = tf.Variable(np.zeros(n_hidden,), dtype="float32", trainable=True, name='b_h')
+        self.b_h = tf.Variable(np.zeros(n_hidden,), dtype="float32", trainable=True, name='b_h_3')
 
         self.params = [self.W_z, self.W_h, self.W_r,
                        self.U_h, self.U_r, self.U_z,

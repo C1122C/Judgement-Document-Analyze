@@ -233,23 +233,23 @@ class CNN(object):
             # 对事实输入生成卷积，过滤器个数256，一维卷积窗口大小5
             # 输入30*128，卷积尺寸5*128，得到26*1的向量，因为有256个过滤器，所以共有256个26*1向量
             conv1 = tf.layers.conv1d(input_x, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv3')
+                                     name='conv3_2')
             # 在第二维的26个值中选出最大的，得到一个有256个值的向量
             # op1[128,256] con30fact
             #op_con30fact = tf.reduce_max(conv1, reduction_indices=[1], name='gmp1')
 
             # 对法条输入生成卷积，过滤器个数256，一维卷积窗口大小5
             conv2 = tf.layers.conv1d(input_y, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv4')
+                                     name='conv4_2')
             # op2[128,256] con30law
             #op_con30law = tf.reduce_max(conv2, reduction_indices=[1], name='gmp2')
 
             conv5 = tf.layers.conv1d(x_word, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv7')
+                                     name='conv7_2')
             # op5[128,256] word_fact
             #op_word_fact = tf.reduce_max(conv5, reduction_indices=[1], name='gmp5')
             conv6 = tf.layers.conv1d(y_word, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv8')
+                                     name='conv8_2')
             # op6[128,256] word_law
             #op_word_law = tf.reduce_max(conv6, reduction_indices=[1], name='gmp6')
             # shape[128,26,256,2]
@@ -257,13 +257,13 @@ class CNN(object):
             law_all = tf.concat([tf.expand_dims(conv6, axis=-1), tf.expand_dims(conv2, axis=-1)], axis=3)
             # shape[128,22,252,256]
             conv7 = tf.layers.conv2d(fact_all, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv9')
+                                     name='conv9_2')
             # shape[128,252,256]
             op1 = tf.reduce_max(conv7, reduction_indices=[1], name='gmp7')
             # shape[128,256]
             op1_final = tf.reduce_max(op1, reduction_indices=[1], name='gmp9')
             conv8 = tf.layers.conv2d(law_all, filters=self.config.FILTERS, kernel_size=self.config.KERNEL_SIZE,
-                                     name='conv10')
+                                     name='conv10_2')
             op2 = tf.reduce_max(conv8, reduction_indices=[1], name='gmp8')
             op2_final = tf.reduce_max(op2, reduction_indices=[1], name='gmp10')
 
@@ -275,14 +275,14 @@ class CNN(object):
             h = tf.concat([op1, op2], axis=1)  # [batch,FILTERS*2]
             # 全连接层，输出大小为100，使用偏置项，参与训练
             fc = tf.layers.dense(inputs=h, units=self.config.LAYER_UNITS, use_bias=True,
-                                 trainable=True, name="fc3")
+                                 trainable=True, name="fc3_2")
 
             fc = tf.contrib.layers.dropout(fc, self.keep_prob)  # 根据比例keep_prob输出输入数据，最终返回一个张量
             fc = tf.nn.relu(fc)  # 激活函数，此时fc的维度是hidden_dim
 
             # 分类器,以fc作为输入，输出大小为2
             self.logits = tf.layers.dense(fc, self.config.NUM_CLASS,
-                                          name='fc4')  # 将fc从[batch_size,hidden_dim]映射到[batch_size,num_class]输出
+                                          name='fc4_2')  # 将fc从[batch_size,hidden_dim]映射到[batch_size,num_class]输出
             # softmax将向量上的数值映射成概率，argmax选出做大概率所在的索引值
             self.y_pred_cls = tf.argmax(tf.nn.softmax(self.logits), 1)
 
