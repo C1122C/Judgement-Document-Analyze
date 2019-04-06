@@ -286,3 +286,159 @@ weighted avg     0.8554    0.8573    0.8558       869
 [[539  52]
  [ 72 206]]
 Time usage:0:00:39
+Test for ../../result/checkpoints/times-11/bilstm/best_validation
+Test Loss:   0.23, Test Acc:  78.02%
+              precision    recall  f1-score   support
+
+           0     0.8954    0.8985    0.8970       591
+           1     0.7826    0.7770    0.7798       278
+
+   micro avg     0.8596    0.8596    0.8596       869
+   macro avg     0.8390    0.8377    0.8384       869
+weighted avg     0.8593    0.8596    0.8595       869
+[[531  60]
+ [ 62 216]]
+Time usage:0:00:24
+Test for ../../result/checkpoints/times-11/self_attention/best_validation
+Test Loss:    0.6, Test Acc:  60.07%
+              precision    recall  f1-score   support
+
+           0     0.6801    1.0000    0.8096       591
+           1     0.0000    0.0000    0.0000       278
+
+   micro avg     0.6801    0.6801    0.6801       869
+   macro avg     0.3400    0.5000    0.4048       869
+weighted avg     0.4625    0.6801    0.5506       869
+[[591   0]
+ [278   0]]
+Time usage:0:00:20
+Test for ../../result/checkpoints/times-11/self_attention/best_validation
+Test Loss:   0.61, Test Acc:  60.07%
+              precision    recall  f1-score   support
+
+           0     0.6801    1.0000    0.8096       591
+           1     0.0000    0.0000    0.0000       278
+
+   micro avg     0.6801    0.6801    0.6801       869
+   macro avg     0.3400    0.5000    0.4048       869
+weighted avg     0.4625    0.6801    0.5506       869
+[[591   0]
+ [278   0]]
+Time usage:0:00:21
+Test for ../../result/checkpoints/times-11/attention_gru/best_validation
+Test Loss:   0.25, Test Acc:  78.14%
+              precision    recall  f1-score   support
+
+           0     0.8970    0.8985    0.8977       591
+           1     0.7834    0.7806    0.7820       278
+
+   micro avg     0.8608    0.8608    0.8608       869
+   macro avg     0.8402    0.8395    0.8398       869
+weighted avg     0.8606    0.8608    0.8607       869
+[[531  60]
+ [ 61 217]]
+Time usage:0:00:22
+Test for ../../result/checkpoints/times-11/attention_lstm/best_validation
+Test Loss:   0.28, Test Acc:  75.95%
+              precision    recall  f1-score   support
+
+           0     0.8922    0.8680    0.8799       591
+           1     0.7347    0.7770    0.7552       278
+
+   micro avg     0.8389    0.8389    0.8389       869
+   macro avg     0.8134    0.8225    0.8176       869
+weighted avg     0.8418    0.8389    0.8400       869
+[[513  78]
+ [ 62 216]]
+Time usage:0:00:19
+Test for ../../result/checkpoints/times-11/attention_lstm/best_validation
+Test Loss:   0.28, Test Acc:  78.37%
+              precision    recall  f1-score   support
+
+           0     0.8907    0.9103    0.9004       591
+           1     0.8000    0.7626    0.7808       278
+
+   micro avg     0.8631    0.8631    0.8631       869
+   macro avg     0.8454    0.8365    0.8406       869
+weighted avg     0.8617    0.8631    0.8622       869
+[[538  53]
+ [ 66 212]]
+Time usage:0:00:20
+Test for ../../result/checkpoints/times-11/con3_with_bilstm_1dconv_all_output/best_validation
+Test Loss:   0.26, Test Acc:  76.99%
+              precision    recall  f1-score   support
+
+           0     0.8846    0.8951    0.8898       591
+           1     0.7712    0.7518    0.7614       278
+
+   micro avg     0.8493    0.8493    0.8493       869
+   macro avg     0.8279    0.8234    0.8256       869
+weighted avg     0.8483    0.8493    0.8487       869
+[[529  62]
+ [ 69 209]]
+Time usage:0:00:46
+Test for ../../result/checkpoints/times-11/con3_with_bilstm_1dconv_last_output/best_validation
+Test Loss:   0.33, Test Acc:  77.33%
+              precision    recall  f1-score   support
+
+           0     0.8826    0.9036    0.8930       591
+           1     0.7841    0.7446    0.7638       278
+
+   micro avg     0.8527    0.8527    0.8527       869
+   macro avg     0.8334    0.8241    0.8284       869
+weighted avg     0.8511    0.8527    0.8517       869
+[[534  57]
+ [ 71 207]]
+Time usage:0:00:44
+Test for ../../result/checkpoints/times-11/blilstm_cnn_attention/best_validation
+Test Loss:   0.27, Test Acc:  76.29%
+              precision    recall  f1-score   support
+
+           0     0.8809    0.8883    0.8846       591
+           1     0.7582    0.7446    0.7514       278
+
+   micro avg     0.8423    0.8423    0.8423       869
+   macro avg     0.8196    0.8165    0.8180       869
+weighted avg     0.8416    0.8423    0.8420       869
+[[525  66]
+ [ 71 207]]
+Time usage:0:00:26
+Test for ../../result/checkpoints/times-11/blilstm_cnn_attention/best_validation
+Test Loss:   0.25, Test Acc:  78.14%
+              precision    recall  f1-score   support
+
+           0     0.8997    0.8951    0.8974       591
+           1     0.7794    0.7878    0.7835       278
+
+   micro avg     0.8608    0.8608    0.8608       869
+   macro avg     0.8395    0.8414    0.8405       869
+weighted avg     0.8612    0.8608    0.8610       869
+[[529  62]
+ [ 59 219]]
+Time usage:0:00:24
+Test for ../../result/checkpoints/times-11/blilstm_cnn_attention/best_validation
+Test Loss:   0.24, Test Acc:  78.48%
+              precision    recall  f1-score   support
+
+           0     0.8808    0.9255    0.9026       591
+           1     0.8226    0.7338    0.7757       278
+
+   micro avg     0.8642    0.8642    0.8642       869
+   macro avg     0.8517    0.8297    0.8392       869
+weighted avg     0.8622    0.8642    0.8620       869
+[[547  44]
+ [ 74 204]]
+Time usage:0:00:25
+Test for ../../result/checkpoints/times-11/blilstm_cnn_attention/best_validation
+Test Loss:   0.28, Test Acc:  78.83%
+              precision    recall  f1-score   support
+
+           0     0.8914    0.9171    0.9041       591
+           1     0.8123    0.7626    0.7866       278
+
+   micro avg     0.8677    0.8677    0.8677       869
+   macro avg     0.8519    0.8398    0.8454       869
+weighted avg     0.8661    0.8677    0.8665       869
+[[542  49]
+ [ 66 212]]
+Time usage:0:00:27
