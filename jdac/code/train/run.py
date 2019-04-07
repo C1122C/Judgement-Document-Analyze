@@ -8,7 +8,7 @@ from datetime import timedelta
 import numpy as np
 import tensorflow as tf
 from sklearn import metrics
-from jdac.code.model.bilstm_cnn_attention import ModelConfig, TextRNN
+from jdac.code.model.ce_order_con3gru import ModelConfig, CNN
 from jdac.code.train.loader import batch_iter, batch_iter_test, data_load
 
 data_dir = '../../source/set_4'
@@ -41,15 +41,15 @@ org_save_path = save_dir+'/checkpoints/'+tm_path+'/original/best_validation'
 org_tensor_board_dir = save_dir + '/tensor_board/' + tm_path+'/original/best_validation'
 con30_save_path = save_dir + '/checkpoints/' + tm_path + '/con30/best_validation'
 con30_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con30/best_validation'
-con_v_save_path = save_dir + '/checkpoints/' + tm_path + '/blilstm_cnn_attention/best_validation'
-con_v_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/blilstm_cnn_attention/best_validation'
+con_v_save_path = save_dir + '/checkpoints/' + tm_path + '/con3gru/best_validation'
+con_v_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con3gru/best_validation'
 con_2_save_path = save_dir + '/checkpoints/' + tm_path + '/con_2/best_validation'
 con_2_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con_2/best_validation'
 con_weight_save_path = save_dir + '/checkpoints/' + tm_path + '/con_weight_change/best_validation'
 con_weight_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con_weight_change/best_validation'
 
 config = ModelConfig()
-model = TextRNN(config)
+model = CNN(config)
 
 
 # 获取已用时间
@@ -64,7 +64,7 @@ def feed_data(x1_batch, x2_batch, ks_batch, y_batch, keep_prob):
     feed_dict = {
         model.input_x1: x1_batch,
         model.input_x2: x2_batch,
-        #model.input_ks: ks_batch,
+        model.input_ks: ks_batch,
         model.input_y: y_batch,
         model.keep_prob: keep_prob
     }
@@ -222,7 +222,7 @@ def test(dic):
         feed_dict = {
             model.input_x1: x1_test[start_id:end_id],
             model.input_x2: x2_test[start_id:end_id],
-            #model.input_ks: ks_test[start_id:end_id],
+            model.input_ks: ks_test[start_id:end_id],
             model.keep_prob: 1.0   # 这个表示测试时不使用dropout对神经元过滤
         }
         # 将所有批次的预测结果都存放在y_pred_cls中

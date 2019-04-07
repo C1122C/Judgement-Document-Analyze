@@ -19,7 +19,7 @@ class ModelConfig(object):
         self.save_per_batch = 10  # 每训练10次保存和打印一次
         self.print_per_batch = 10
         self.dropout_keep_prob = 0.8  # 以0.5的概率去除部分连接防止过拟合
-        self.rnn = 'lstm'  # lstm 或 gru
+        self.rnn = 'gru'  # lstm 或 gru
         self.num_filters = 256  # 卷积核数目
         self.kernel_size = 5  # 卷积核尺寸
 
