@@ -275,5 +275,10 @@
                 <FLNR nameCN="法条内容" value="拘役的缓刑考验期限为原判刑期以上一年以下，但是不能少于二个月。有期徒刑的缓刑考验期限为原判刑期以上五年以下，但是不能少于一年。缓刑考验期限，从判决确定之日起计算。" />
             </FLNRFZ>
         </YYFLNR>
+        <KS>
+            <K_N nameCN="名称" value="刑法" />
+            <K_C nameCN="章" value="危害" />
+            <K_S nameCN="节" value="" />
+        </KS>
     </QW>
 </writ>
