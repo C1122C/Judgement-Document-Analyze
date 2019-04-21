@@ -16,6 +16,7 @@ def getQW(path):
 def get_law_list(path):
     name_list = []
     nr_list = []
+    ks_list = []
     qw = getQW(path)
     for qwchild in qw:
         # 引用法条内容
@@ -25,6 +26,10 @@ def get_law_list(path):
                 if yyflfzchild.tag == 'FLNRFZ':
                     for flnrfzchild in yyflfzchild:
                         flag = 0
+                        ks = []
+                        name = ''
+                        c = ''
+                        s = ''
                         # 法条名称
                         if flnrfzchild.tag == 'FLMC':
                             flmc = flnrfzchild.attrib['value']
@@ -32,41 +37,26 @@ def get_law_list(path):
                         # 法条内容
                         if flnrfzchild.tag == 'FLNR':
                             flnr = flnrfzchild.attrib['value']
-                            flag += 2
-                        if flag == 2 and flmc and flnr and flnr != 'NOT FOUND':
+                            flag += 1
+                        if flnrfzchild.tag == 'KS':
+                            for sub in flnrfzchild:
+                                if sub.tag == 'K_N':
+                                    name = sub.attrib['value']
+                                if sub.tag == 'K_C':
+                                    c = sub.attrib['value']
+                                if sub.tag == 'K_S':
+                                    s = sub.attrib['value']
+                            flag += 3
+                            if name and c and s:
+                                ks.append(name)
+                                ks.append(c)
+                                ks.append(s)
+                        if flag == 5 and flmc and flnr and flnr != 'NOT FOUND':
                             name_list.append(flmc)
                             nr_list.append(flnr)
+                            ks_list.append(ks)
 
-    return name_list, nr_list
-
-
-# 提取先验知识
-def get_ks(path):
-    res = []
-    name = ''
-    chac = ''
-    sec = ''
-    qw = getQW(path)
-    for qwchild in qw:
-        # 先验知识
-        if qwchild.tag == 'KS':
-            for kschild in qwchild:
-                # 名称
-                if kschild.tag == 'K_N':
-                    name = kschild.attrib['value']
-                # 章
-                if kschild.tag == 'K_C':
-                    chac = kschild.attrib['value']
-                # 节
-                if kschild.tag == 'K_S':
-                    sec = kschild.attrib['value']
-    if name != '':
-        res.append(name)
-    if chac != '':
-        res.append(chac)
-    if sec != '':
-        res.append(sec)
-    return res
+    return name_list, nr_list, ks_list
 
 
 # 获取事实内容
@@ -107,8 +97,7 @@ def cut(fact, statue, ks):
 
 # 向量化
 def vec(data):
-    model_fact = load_models('../../source/wordvector/ssmodel_size128.model')
-    model_statue = load_models('../../source/wordvector/lawmodel_size128.model')
+    model = load_models('../../source/vec_model_size128.model')
 
     news = ''
     array = data.split('|')
@@ -120,16 +109,16 @@ def vec(data):
     statue_ls = array[1].split(' ')
     ks_ls = array[2].split('@')
     for ss in fact_ls:
-        news += '//'.join(map(str, list(vector(ss, model_fact)))) + ' '
+        news += '//'.join(map(str, list(vector(ss, model)))) + ' '
     news += '|'
     for zw in statue_ls:
-        news += '//'.join(map(str, list(vector(zw, model_statue)))) + ' '
+        news += '//'.join(map(str, list(vector(zw, model)))) + ' '
     news += '|' + array[3] + '|'
-    news += ks_vec(ks_ls, model_statue, flag=3)
+    news += ks_vec(ks_ls, model)
     return news
 
 
-def ks_vec(ks_ls, word_m, flag=3):
+def ks_vec(ks_ls, word_m):
     s = ''
     # 将层级目录分为三级：名字/章/节(包含?:),向量化
     matrix = np.zeros(shape=[3, 128], dtype=float)
