@@ -27,14 +27,15 @@ class ModelConfig(object):
 
 class CNN(object):
     def __init__(self, config):
+        print("IN RIGHT MODEL")
         self.config = config
-        self.input_x1 = tf.placeholder(tf.float32, [128, self.config.FACT_LEN, self.config.EMBEDDING_DIM],
+        self.input_x1 = tf.placeholder(tf.float32, [None, self.config.FACT_LEN, self.config.EMBEDDING_DIM],
                                        name='input_x1')  # 输入1：事实[ ,30,128]
-        self.input_x2 = tf.placeholder(tf.float32, [128, self.config.LAW_LEN, self.config.EMBEDDING_DIM],
+        self.input_x2 = tf.placeholder(tf.float32, [None, self.config.LAW_LEN, self.config.EMBEDDING_DIM],
                                        name='input_x2')  # 输入2：法条[ ,30,128]
-        self.input_ks = tf.placeholder(tf.float32, [128, self.config.KS_LEN, self.config.EMBEDDING_DIM],
+        self.input_ks = tf.placeholder(tf.float32, [None, self.config.KS_LEN, self.config.EMBEDDING_DIM],
                                        name="input_ks")  # 输入3：先验知识[ ,3,128]
-        self.input_y = tf.placeholder(tf.int32, [128, self.config.NUM_CLASS],
+        self.input_y = tf.placeholder(tf.int32, [None, self.config.NUM_CLASS],
                                       name='input_y')  # 输入4：分类数[ ,2]
         self.keep_prob = tf.placeholder(tf.float32, name='keep_prob')
 
@@ -139,9 +140,9 @@ class CNN(object):
             # fun2[ ,30,1,2]
             fun2 = tf.einsum('abcd,de->abce', input_x_epd, weight_2)
 
-            print('fun2:', fun2.shape, flush=True)
-            print('k_3:', k_3.shape, flush=True)
-            print('ksw_1:', ksw_1.shape, flush=True)
+            # print('fun2:', fun2.shape, flush=True)
+            # print('k_3:', k_3.shape, flush=True)
+            # print('ksw_1:', ksw_1.shape, flush=True)
             ksw_2 = tf.sigmoid(tf.nn.relu(tf.einsum('abcd,abdf->abcf', fun2, tf.concat([k_3, ksw_1], axis=2))))
 
             # fun3[a,b,c,e]=input_x_epd[a,b,c,d]*weight_3[d,e]

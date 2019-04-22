@@ -8,7 +8,7 @@ from datetime import timedelta
 import numpy as np
 import tensorflow as tf
 from sklearn import metrics
-from jdac.code.model.ce_order_con_att import ModelConfig, CNN
+from jdac.code.model.Model import ModelConfig, CNN
 from jdac.code.train.loader import batch_iter, batch_iter_test, data_load
 
 data_dir = '../../source/set_4'
@@ -41,8 +41,8 @@ org_save_path = save_dir+'/checkpoints/'+tm_path+'/original/best_validation'
 org_tensor_board_dir = save_dir + '/tensor_board/' + tm_path+'/original/best_validation'
 con30_save_path = save_dir + '/checkpoints/' + tm_path + '/con30/best_validation'
 con30_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con30/best_validation'
-con_v_save_path = save_dir + '/checkpoints/' + tm_path + '/con30_att4/best_validation'
-con_v_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con30_att4/best_validation'
+con_v_save_path = save_dir + '/checkpoints/' + tm_path + '/Model/best_validation'
+con_v_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/Model/best_validation'
 con_2_save_path = save_dir + '/checkpoints/' + tm_path + '/con_2/best_validation'
 con_2_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con_2/best_validation'
 con_weight_save_path = save_dir + '/checkpoints/' + tm_path + '/con_weight_change/best_validation'
@@ -247,5 +247,5 @@ def test(dic):
     return y_test_cls, y_pred_cls
 
 
-train(con_v_save_path, con_v_tensor_board_dir)
-test(con_v_save_path)
+#train(con_v_save_path, con_v_tensor_board_dir)
+test("../../result/checkpoints/times-11/Model/best_validation")

@@ -3,7 +3,6 @@ import os
 import jieba.posseg as pos
 import gensim
 from gensim.models import word2vec
-from jdac.code.util.file_fun import getlines
 
 
 def build_model(doc_path, corpus_path, model_path, stop_word_path):
@@ -22,7 +21,7 @@ def build_model(doc_path, corpus_path, model_path, stop_word_path):
 def filter_word_with_cx(cutre, cxlist, spwordpath):
     word_list = []
     print('filter word....')
-    stopwords = getlines(spwordpath)
+    stopwords = get_lines(spwordpath)
     for (w, k) in cutre:
         if k not in cxlist and w not in stopwords:
             word_list.append(w)
@@ -56,3 +55,10 @@ def vector(v, model):
         return model[v]
     except:
         return [0]*128
+
+
+def get_lines(filepath):
+    with open(filepath, 'r', encoding='utf-8') as f:
+        content = f.read().split('\n')
+    lines = list(filter(lambda x: str(x).strip() != '', content))
+    return lines
