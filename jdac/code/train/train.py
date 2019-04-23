@@ -21,35 +21,20 @@ v_f = open(val_data_path, 'r', encoding='utf-8')
 test_f = open(test_path, 'r', encoding='utf-8')
 
 ks_flag = 3   # kw level
-n_number = 1  # n-gram
-gate_n = 3
-reg = False  # default is false
-times = 1
-ks_order = '123'
-mirror_gate = 1
-precessF = '2'
-precessL = '1'
-topK = 5  # default is 5
-last_ks_info = 'False'  # default is true
-sing_leuse = '3'
-relu = 'False'  # default is true
 
 save_dir = '../../result'
 result = '../../record/result.txt'
-tm_path = 'times-11'
-org_save_path = save_dir+'/checkpoints/'+tm_path+'/original/best_validation'
-org_tensor_board_dir = save_dir + '/tensor_board/' + tm_path+'/original/best_validation'
-con30_save_path = save_dir + '/checkpoints/' + tm_path + '/con30/best_validation'
-con30_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con30/best_validation'
+tm_path = 'times-17'
 con_v_save_path = save_dir + '/checkpoints/' + tm_path + '/Model/best_validation'
 con_v_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/Model/best_validation'
-con_2_save_path = save_dir + '/checkpoints/' + tm_path + '/con_2/best_validation'
-con_2_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con_2/best_validation'
-con_weight_save_path = save_dir + '/checkpoints/' + tm_path + '/con_weight_change/best_validation'
-con_weight_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/con_weight_change/best_validation'
 
 config = ModelConfig()
 model = CNN(config)
+
+if not os.path.exists(con_v_save_path):
+    os.makedirs(con_v_save_path)
+if not os.path.exists(con_v_tensor_board_dir):
+    os.makedirs(con_v_tensor_board_dir)
 
 
 # 获取已用时间
@@ -247,5 +232,5 @@ def test(dic):
     return y_test_cls, y_pred_cls
 
 
-#train(con_v_save_path, con_v_tensor_board_dir)
-test("../../result/checkpoints/times-11/Model/best_validation")
+train(con_v_save_path, con_v_tensor_board_dir)
+test(con_v_save_path)
