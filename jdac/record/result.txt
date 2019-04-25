@@ -1470,3 +1470,16 @@ weighted avg     0.8686    0.8700    0.8690       869
 [[542  49]
  [ 64 214]]
 Time usage:0:00:35
+Test for ../../result/checkpoints/times-12/Model/best_validation
+Test Loss:   0.24, Test Acc:  79.06%
+              precision    recall  f1-score   support
+
+           0     0.8944    0.9171    0.9056       591
+           1     0.8137    0.7698    0.7911       278
+
+   micro avg     0.8700    0.8700    0.8700       869
+   macro avg     0.8540    0.8434    0.8484       869
+weighted avg     0.8686    0.8700    0.8690       869
+[[542  49]
+ [ 64 214]]
+Time usage:0:00:35

@@ -63,7 +63,7 @@ def run():
     session = tf.Session()
     session.run(tf.global_variables_initializer())
     saver = tf.train.Saver()
-    saver.restore(sess=session, save_path="../../result/checkpoints/times-11/Model/best_validation")  # 读取保存的模型
+    saver.restore(sess=session, save_path="../../result/checkpoints/times-12/Model/best_validation")  # 读取保存的模型
     y_pred_cls = np.zeros(shape=len(input_1), dtype=np.int32)  # 保存预测结果
     feed_dict = {
         model.input_x1: input_1,
