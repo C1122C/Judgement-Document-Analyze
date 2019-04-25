@@ -24,7 +24,7 @@ ks_flag = 3   # kw level
 
 save_dir = '../../result'
 result = '../../record/result.txt'
-tm_path = 'times-17'
+tm_path = 'times-12'
 con_v_save_path = save_dir + '/checkpoints/' + tm_path + '/Model/best_validation'
 con_v_tensor_board_dir = save_dir+'/tensor_board/' + tm_path + '/Model/best_validation'
 
@@ -232,5 +232,5 @@ def test(dic):
     return y_test_cls, y_pred_cls
 
 
-train(con_v_save_path, con_v_tensor_board_dir)
+# train(con_v_save_path, con_v_tensor_board_dir)
 test(con_v_save_path)
